@@ -135,6 +135,40 @@ export function App() {
     [domain, selectedNodeId, highlightedIds, impactMode],
   )
 
+  // ── Browser-history navigation: Back/Forward move between top-level views ──
+  type Nav = { landing: boolean; components: boolean; patterns: boolean; domainId: string }
+
+  function applyNav(n: Nav) {
+    setShowLanding(n.landing)
+    setShowComponents(n.components)
+    setShowPatterns(n.patterns)
+    setActiveDomainId(n.domainId)
+    setSelectedNodeId(null)
+    setSelectedCategory(null)
+  }
+
+  function pushNav(partial: Partial<Nav>) {
+    const next: Nav = {
+      landing: false,
+      components: false,
+      patterns: false,
+      domainId: activeDomainId,
+      ...partial,
+    }
+    window.history.pushState(next, '')
+    applyNav(next)
+  }
+
+  useEffect(() => {
+    const home: Nav = { landing: true, components: false, patterns: false, domainId: domains[0].id }
+    // Seed the first entry (the landing screen) so Back has somewhere to return to.
+    window.history.replaceState(home, '')
+    const onPop = (e: PopStateEvent) => applyNav((e.state as Nav) ?? home)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function selectOption(nodeId: string, optionId: string) {
     setChoicesByDomain((prev) => ({
       ...prev,
@@ -155,20 +189,14 @@ export function App() {
   }
 
   function switchDomain(id: string) {
-    setActiveDomainId(id)
-    setSelectedNodeId(null)
-    setSelectedCategory(null)
-    setShowPatterns(false)
-    setShowComponents(false)
+    pushNav({ domainId: id })
   }
 
   // Jump from a pattern instance to the exact node in its domain.
   function jumpToNode(domainId: string, nodeId: string) {
-    setShowPatterns(false)
-    setShowComponents(false)
-    setActiveDomainId(domainId)
+    pushNav({ domainId })
     setSelectedNodeId(nodeId)
-    setSelectedCategory(null)
+    setPanelCollapsed(false)
   }
 
   function resetDomain() {
@@ -183,28 +211,9 @@ export function App() {
   if (showLanding) {
     return (
       <Landing
-        onEnter={(id) => {
-          if (id) setActiveDomainId(id)
-          setSelectedNodeId(null)
-          setSelectedCategory(null)
-          setShowPatterns(false)
-          setShowComponents(false)
-          setShowLanding(false)
-        }}
-        onPatterns={() => {
-          setShowPatterns(true)
-          setShowComponents(false)
-          setSelectedNodeId(null)
-          setSelectedCategory(null)
-          setShowLanding(false)
-        }}
-        onComponents={() => {
-          setShowComponents(true)
-          setShowPatterns(false)
-          setSelectedNodeId(null)
-          setSelectedCategory(null)
-          setShowLanding(false)
-        }}
+        onEnter={(id) => pushNav(id ? { domainId: id } : {})}
+        onPatterns={() => pushNav({ patterns: true })}
+        onComponents={() => pushNav({ components: true })}
       />
     )
   }
@@ -214,7 +223,7 @@ export function App() {
       <header className="topbar">
         <button
           className="brand"
-          onClick={() => setShowLanding(true)}
+          onClick={() => pushNav({ landing: true })}
           title="Back to the intro"
         >
           <span className="brand__name">ArchLab</span>
@@ -237,25 +246,15 @@ export function App() {
           </label>
           <button
             className={`domain-tab domain-tab--patterns ${showComponents ? 'domain-tab--active' : ''}`}
-            onClick={() => {
-              setShowComponents(true)
-              setShowPatterns(false)
-              setSelectedNodeId(null)
-              setSelectedCategory(null)
-            }}
+            onClick={() => pushNav({ components: true })}
           >
-            ▤ Components
+            Components
           </button>
           <button
             className={`domain-tab domain-tab--patterns ${showPatterns ? 'domain-tab--active' : ''}`}
-            onClick={() => {
-              setShowPatterns(true)
-              setShowComponents(false)
-              setSelectedNodeId(null)
-              setSelectedCategory(null)
-            }}
+            onClick={() => pushNav({ patterns: true })}
           >
-            ⊞ Patterns
+            Patterns
           </button>
         </nav>
         <div className="actions">

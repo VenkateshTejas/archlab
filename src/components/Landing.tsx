@@ -40,10 +40,10 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
               Start exploring →
             </button>
             <button className="landing__btn" onClick={onComponents}>
-              ▤ Learn the components first
+              Learn the components first
             </button>
             <button className="landing__btn" onClick={onPatterns}>
-              ⊞ See the patterns
+              See the patterns
             </button>
           </div>
         </header>
