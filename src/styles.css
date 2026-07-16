@@ -961,6 +961,7 @@ body {
 }
 .landing-card {
   text-align: left;
+  color: var(--text);
   background: var(--panel);
   border: 1px solid var(--border);
   border-top: 3px solid var(--accent);

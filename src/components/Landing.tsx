@@ -1,11 +1,13 @@
 import { domains } from '../data'
 
-// Accent color per domain (matches the node category palette loosely).
+// Accent color per domain — the card's top border AND its title use this, so
+// each card reads as one color. Social uses teal (not blue) so it doesn't blend
+// into the site's blue accent.
 const DOMAIN_ACCENT: Record<string, string> = {
-  ticketing: 'var(--c-edge)',
-  social: 'var(--c-compute)',
-  ecommerce: 'var(--c-datastore)',
-  betting: 'var(--c-queue)',
+  ticketing: '#e0a52a', // gold
+  social: '#22c3d6', // teal
+  ecommerce: '#3fb950', // green
+  betting: '#b07cff', // purple
 }
 
 interface Props {
@@ -67,18 +69,25 @@ export function Landing({ onEnter, onPatterns }: Props) {
 
         <div className="landing__pick">Pick an architecture to start</div>
         <div className="landing__domains">
-          {domains.map((d) => (
-            <button
-              key={d.id}
-              className="landing-card"
-              style={{ borderTopColor: DOMAIN_ACCENT[d.id] ?? 'var(--accent)' }}
-              onClick={() => onEnter(d.id)}
-            >
-              <div className="landing-card__name">{d.name}</div>
-              <div className="landing-card__tag">{d.tagline}</div>
-              <div className="landing-card__go">Explore →</div>
-            </button>
-          ))}
+          {domains.map((d) => {
+            const accent = DOMAIN_ACCENT[d.id] ?? 'var(--accent)'
+            return (
+              <button
+                key={d.id}
+                className="landing-card"
+                style={{ borderTopColor: accent }}
+                onClick={() => onEnter(d.id)}
+              >
+                <div className="landing-card__name" style={{ color: accent }}>
+                  {d.name}
+                </div>
+                <div className="landing-card__tag">{d.tagline}</div>
+                <div className="landing-card__go" style={{ color: accent }}>
+                  Explore →
+                </div>
+              </button>
+            )
+          })}
         </div>
 
         <div className="landing__features">
