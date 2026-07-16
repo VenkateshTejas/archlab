@@ -17,6 +17,7 @@ import { ComponentNode, type ComponentNodeData } from './components/ComponentNod
 import { InspectorPanel } from './components/InspectorPanel'
 import { DomainBrief } from './components/DomainBrief'
 import { PatternsView } from './components/PatternsView'
+import { ComponentsView } from './components/ComponentsView'
 import { CategoryInfo, CATEGORY_META } from './components/CategoryInfo'
 import { Landing } from './components/Landing'
 import { layoutDomain } from './layout'
@@ -42,6 +43,7 @@ export function App() {
   const [selectedCategory, setSelectedCategory] = useState<NodeCategory | null>(null)
   const [quizMode, setQuizMode] = useState(false)
   const [showPatterns, setShowPatterns] = useState(false)
+  const [showComponents, setShowComponents] = useState(false)
   const [showLanding, setShowLanding] = useState(true)
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [choicesByDomain, setChoicesByDomain] = useState<Record<string, Choices>>(() =>
@@ -157,11 +159,13 @@ export function App() {
     setSelectedNodeId(null)
     setSelectedCategory(null)
     setShowPatterns(false)
+    setShowComponents(false)
   }
 
   // Jump from a pattern instance to the exact node in its domain.
   function jumpToNode(domainId: string, nodeId: string) {
     setShowPatterns(false)
+    setShowComponents(false)
     setActiveDomainId(domainId)
     setSelectedNodeId(nodeId)
     setSelectedCategory(null)
@@ -184,10 +188,19 @@ export function App() {
           setSelectedNodeId(null)
           setSelectedCategory(null)
           setShowPatterns(false)
+          setShowComponents(false)
           setShowLanding(false)
         }}
         onPatterns={() => {
           setShowPatterns(true)
+          setShowComponents(false)
+          setSelectedNodeId(null)
+          setSelectedCategory(null)
+          setShowLanding(false)
+        }}
+        onComponents={() => {
+          setShowComponents(true)
+          setShowPatterns(false)
           setSelectedNodeId(null)
           setSelectedCategory(null)
           setShowLanding(false)
@@ -223,9 +236,21 @@ export function App() {
             </select>
           </label>
           <button
+            className={`domain-tab domain-tab--patterns ${showComponents ? 'domain-tab--active' : ''}`}
+            onClick={() => {
+              setShowComponents(true)
+              setShowPatterns(false)
+              setSelectedNodeId(null)
+              setSelectedCategory(null)
+            }}
+          >
+            ▤ Components
+          </button>
+          <button
             className={`domain-tab domain-tab--patterns ${showPatterns ? 'domain-tab--active' : ''}`}
             onClick={() => {
               setShowPatterns(true)
+              setShowComponents(false)
               setSelectedNodeId(null)
               setSelectedCategory(null)
             }}
@@ -247,7 +272,9 @@ export function App() {
         </div>
       </header>
 
-      {showPatterns ? (
+      {showComponents ? (
+        <ComponentsView />
+      ) : showPatterns ? (
         <PatternsView onJump={jumpToNode} />
       ) : (
         <>

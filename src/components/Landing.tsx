@@ -15,9 +15,11 @@ interface Props {
   onEnter: (domainId?: string) => void
   /** Open the cross-domain patterns view. */
   onPatterns: () => void
+  /** Open the components-101 reference library. */
+  onComponents: () => void
 }
 
-export function Landing({ onEnter, onPatterns }: Props) {
+export function Landing({ onEnter, onPatterns, onComponents }: Props) {
   return (
     <div className="landing">
       <div className="landing__inner">
@@ -36,6 +38,9 @@ export function Landing({ onEnter, onPatterns }: Props) {
           <div className="landing__cta">
             <button className="landing__btn landing__btn--primary" onClick={() => onEnter()}>
               Start exploring →
+            </button>
+            <button className="landing__btn" onClick={onComponents}>
+              ▤ Learn the components first
             </button>
             <button className="landing__btn" onClick={onPatterns}>
               ⊞ See the patterns

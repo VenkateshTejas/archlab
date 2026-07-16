@@ -129,3 +129,21 @@ export interface Pattern {
   mechanism: string
   instances: PatternInstance[]
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// Components 101 — a reference library of the building blocks, so a learner can
+// understand each piece before meeting it inside a full architecture.
+// ──────────────────────────────────────────────────────────────────────────
+
+export interface ComponentDoc {
+  id: string
+  name: string
+  /** Reuses the node palette so the library and the diagrams share colors. */
+  category: NodeCategory
+  /** One-line gist. */
+  oneLiner: string
+  /** ~100-word plain-English explanation of what it is and why it exists. */
+  what: string
+  /** Common variants / flavors of this component. */
+  types: { name: string; note: string }[]
+}
