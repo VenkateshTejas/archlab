@@ -18,6 +18,7 @@ import { InspectorPanel } from './components/InspectorPanel'
 import { DomainBrief } from './components/DomainBrief'
 import { PatternsView } from './components/PatternsView'
 import { CategoryInfo, CATEGORY_META } from './components/CategoryInfo'
+import { Landing } from './components/Landing'
 import { layoutDomain } from './layout'
 
 const nodeTypes = { component: ComponentNode }
@@ -41,6 +42,7 @@ export function App() {
   const [selectedCategory, setSelectedCategory] = useState<NodeCategory | null>(null)
   const [quizMode, setQuizMode] = useState(false)
   const [showPatterns, setShowPatterns] = useState(false)
+  const [showLanding, setShowLanding] = useState(true)
   const [choicesByDomain, setChoicesByDomain] = useState<Record<string, Choices>>(() =>
     Object.fromEntries(domains.map((d) => [d.id, defaultChoices(d)])),
   )
@@ -152,13 +154,37 @@ export function App() {
     (n) => n.decision && choices[n.id] !== (n.decision.options.find((o) => o.isDefault) ?? n.decision.options[0]).id,
   )
 
+  if (showLanding) {
+    return (
+      <Landing
+        onEnter={(id) => {
+          if (id) setActiveDomainId(id)
+          setSelectedNodeId(null)
+          setSelectedCategory(null)
+          setShowPatterns(false)
+          setShowLanding(false)
+        }}
+        onPatterns={() => {
+          setShowPatterns(true)
+          setSelectedNodeId(null)
+          setSelectedCategory(null)
+          setShowLanding(false)
+        }}
+      />
+    )
+  }
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
+        <button
+          className="brand"
+          onClick={() => setShowLanding(true)}
+          title="Back to the intro"
+        >
           <span className="brand__name">ArchLab</span>
           <span className="brand__tag">swap a component, see what breaks</span>
-        </div>
+        </button>
         <nav className="domains">
           <label className="domain-select">
             <span className="domain-select__caption">Architecture</span>
