@@ -1,5 +1,7 @@
 # ArchLab — Learn System Design by Swapping Components
 
+**▶ Live demo: https://aarchlab.netlify.app**
+
 Interactive reference architectures for high-stakes systems. Click any component
 to see the real design decision behind it, then **swap the technology and watch
 what breaks downstream**. Curated, accurate, counterfactual — not an LLM guessing.
@@ -55,6 +57,19 @@ place it recurs — and each instance **links straight to that node in its domai
 so you see the abstraction and the concrete side by side. Content lives in
 `src/data/patterns.ts`.
 
+### Accuracy — because it's a learning source
+
+The content is the product, so it's held to a high bar. Every architecture went
+through **two rounds of independent adversarial technical review** (one expert
+pass per domain, then a second pass verifying each fix landed and caught no
+regressions). That process found and fixed real issues — e.g. invalid Postgres
+partial-index syntax, a fund-oversell hole in the betting flow (stale balance
+read → now a synchronous stake hold), and DNS drawn as an in-path hop (now a
+distinct dotted control-plane edge). The claims that survived — the
+partial-unique-index guarantee, the Redlock critique, fan-out / celebrity
+hot-key, idempotency (concurrent-retry + retention window), LMAX journal-before-ack,
+double-entry ledgers — are the load-bearing lessons.
+
 ### Add a new domain
 1. Create `src/data/myDomain.ts` exporting a `Domain`.
 2. Add it to the array in `src/data/index.ts`.
@@ -70,10 +85,10 @@ npm run build    # production build into dist/
 
 ## Deploy for $0
 
-It's a static SPA (`base: './'` so it works on any subpath):
-
-- **Vercel / Netlify** — import the repo, framework "Vite", build `npm run build`, output `dist`.
-- **GitHub Pages** — push `dist/` (or use an action) to the `gh-pages` branch.
+It's a static SPA (`base: './'` so it works on any subpath). This repo is
+deployed on **Netlify** via [`netlify.toml`](./netlify.toml) — every push to
+`main` auto-redeploys (build `npm run build`, publish `dist`, Node 20). Any
+static host works too (Vercel, GitHub Pages, Cloudflare Pages).
 
 ## Stack
 
