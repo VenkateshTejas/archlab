@@ -1229,6 +1229,7 @@ body {
   .components { flex-direction: column; }
   .components__list {
     width: 100%;
+    display: flex;
     flex-direction: row;
     gap: 6px;
     overflow-x: auto;
@@ -1238,7 +1239,7 @@ body {
     padding: 10px;
   }
   .components__intro { display: none; }
-  .comp-item { flex-shrink: 0; white-space: nowrap; padding: 7px 12px; }
+  .comp-item { flex-shrink: 0; width: auto; white-space: nowrap; padding: 7px 12px; }
   .components__detail { max-width: none; padding: 22px 18px 48px; }
   .comp-detail__name { font-size: 22px; }
   .comp-detail__types { grid-template-columns: 1fr; }
