@@ -1,0 +1,14 @@
+# Netlify build config for the ArchLab Vite SPA.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Vite 6 needs Node 18+; pin to 20 so local and CI match.
+  NODE_VERSION = "20"
+
+# Single-page app: serve index.html for any path (future-proofs client routing).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
