@@ -318,7 +318,7 @@ export function App() {
             proOptions={{ hideAttribution: true }}
           >
             <Background gap={20} />
-            <Controls showInteractive={false} />
+            <Controls showInteractive={false} position="top-right" />
             <FitView dep={`${activeDomainId}-${panelCollapsed}`} />
           </ReactFlow>
           <Legend active={selectedCategory} onSelect={selectCategory} />
