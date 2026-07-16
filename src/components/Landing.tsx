@@ -94,7 +94,6 @@ export function Landing({ onEnter, onPatterns }: Props) {
           <span>◆ Quiz mode — predict before you reveal</span>
           <span>◆ Requirements &amp; back-of-envelope estimation</span>
           <span>◆ Cross-domain patterns that transfer</span>
-          <span>◆ $0 static app — no backend, no LLM calls</span>
         </div>
       </div>
     </div>
