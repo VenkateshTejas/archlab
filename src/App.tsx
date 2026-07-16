@@ -169,6 +169,13 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // On phones the details panel sits below the canvas — scroll to it on select.
+  useEffect(() => {
+    if (selectedNodeId && window.matchMedia('(max-width: 760px)').matches) {
+      document.querySelector('.inspector')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [selectedNodeId])
+
   function selectOption(nodeId: string, optionId: string) {
     setChoicesByDomain((prev) => ({
       ...prev,

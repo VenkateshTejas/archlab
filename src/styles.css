@@ -1186,3 +1186,60 @@ body {
   color: var(--muted);
   line-height: 1.45;
 }
+
+/* ═══════════════ mobile ( ≤ 760px ) ═══════════════ */
+@media (max-width: 760px) {
+  /* let the page scroll instead of locking to 100vh panes */
+  .app { height: auto; min-height: 100vh; }
+
+  /* top bar wraps onto multiple rows */
+  .topbar { flex-wrap: wrap; gap: 10px 12px; padding: 10px 14px; }
+  .brand__tag { display: none; }
+  .domains { gap: 6px; }
+  .domain-select { flex-direction: row; align-items: center; gap: 6px; }
+  .domain-select__caption { display: none; }
+  .actions { margin-left: 0; }
+
+  /* domain view: stack the canvas over the details panel */
+  .main { flex-direction: column; }
+  .canvas { flex: none; width: 100%; height: 56vh; }
+  .panel-toggle { display: none; }
+  .inspector {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .legend { font-size: 10px; padding: 6px 8px; gap: 6px 8px; }
+
+  /* landing */
+  .landing__inner { padding: 40px 18px 44px; }
+  .landing__title { font-size: 26px; }
+  .landing__headline { font-size: 24px; }
+  .landing__sub { font-size: 14px; }
+  .landing__how { grid-template-columns: 1fr; margin: 32px 0 4px; }
+  .landing__domains { grid-template-columns: 1fr; }
+  .landing__btn { flex: 1 1 auto; }
+
+  /* patterns: single column, no forced-width overflow */
+  .patterns { padding: 22px 16px 44px; }
+  .patterns__grid { grid-template-columns: 1fr; }
+  .patterns__intro h1 { font-size: 20px; }
+
+  /* components 101: list becomes a horizontal chip strip above the detail */
+  .components { flex-direction: column; }
+  .components__list {
+    width: 100%;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+  }
+  .components__intro { display: none; }
+  .comp-item { flex-shrink: 0; white-space: nowrap; padding: 7px 12px; }
+  .components__detail { max-width: none; padding: 22px 18px 48px; }
+  .comp-detail__name { font-size: 22px; }
+  .comp-detail__types { grid-template-columns: 1fr; }
+}
