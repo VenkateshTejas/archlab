@@ -7,151 +7,151 @@ export const patterns: Pattern[] = [
   {
     id: 'unbypassable-constraint',
     name: 'Correctness at the source of truth',
-    essence: 'Push the real guarantee to a layer that physically cannot be bypassed.',
+    essence: 'Enforce the real rule in one place that nothing can go around.',
     problem:
-      'App-level checks and distributed locks have races and can fail. You need an invariant that holds even when every layer above it has a bug.',
+      'Checks in your app code, and locks spread across servers, can hit race conditions or simply fail. You need one rule that always holds, even when the code above it has a bug.',
     mechanism:
-      'Encode the invariant where it cannot be skipped — a database constraint, an atomic conditional write, or an append-only log — so the dangerous outcome is impossible, not merely unlikely. Everything above is speed and UX.',
+      'Put the rule where it cannot be skipped — a database constraint, a single atomic write with a built-in condition, or an append-only log. That makes the bad outcome impossible, not just unlikely. Everything above it is only there for speed and a nicer experience.',
     instances: [
       {
         domainId: 'ticketing',
         nodeId: 'db',
         where: 'Primary DB',
-        how: 'Partial unique index physically rejects a second "booked" row for the same slot.',
+        how: 'A partial unique index rejects a second "booked" row for the same slot, so the seat can only be taken once.',
       },
       {
         domainId: 'ecommerce',
         nodeId: 'inventory',
         where: 'Inventory DB',
-        how: 'Atomic conditional decrement (CHECK stock >= 0) makes overselling impossible.',
+        how: 'One atomic decrement that only runs if stock stays >= 0, so you can never sell more than you have.',
       },
       {
         domainId: 'ecommerce',
         nodeId: 'payment',
         where: 'Payment Service',
-        how: 'The idempotency key is the un-bypassable guard against a double charge.',
+        how: 'An idempotency key (a unique id for the charge) is the guard that can\'t be skipped, so the customer is never charged twice.',
       },
       {
         domainId: 'betting',
         nodeId: 'ledger',
         where: 'Settlement Ledger',
-        how: 'Append-only double-entry means balances are always derivable and can\'t be silently corrupted.',
+        how: 'Money is only ever added as new rows (double-entry, never edited or deleted), so every balance can be recomputed from the record and can\'t be quietly changed.',
       },
     ],
   },
   {
     id: 'idempotency',
     name: 'Idempotency — safe retries',
-    essence: 'Make an operation safe to repeat, so a retry can\'t apply it twice.',
+    essence: 'Make an action safe to repeat, so running it again doesn\'t apply it twice.',
     problem:
-      'Networks time out; clients and message queues retry. Without protection a retry double-charges, double-books, or double-credits.',
+      'Networks time out, and clients and message queues retry automatically. Without protection, that retry can charge, book, or credit the same thing twice.',
     mechanism:
-      'Attach a unique key (or rely on a natural unique constraint) to the operation. On a repeat, recognize the key and return the original result instead of re-executing. This is what makes async queues safe.',
+      'Give the action a unique key (or use a natural unique constraint that already exists). If the same key shows up again, recognize it and return the original result instead of doing the work a second time. This is what makes async queues safe.',
     instances: [
       {
         domainId: 'ecommerce',
         nodeId: 'payment',
         where: 'Payment Service',
-        how: 'Client sends an idempotency key; a retried charge returns the original result.',
+        how: 'The client sends an idempotency key with the charge; if it retries, the same result comes back instead of a second charge.',
       },
       {
         domainId: 'ticketing',
         nodeId: 'bookingSvc',
         where: 'Booking Service',
-        how: 'The async confirmation consumer is idempotent so a redelivered message can\'t double-confirm.',
+        how: 'The worker that confirms bookings is idempotent, so if the queue delivers the same message twice the booking is still only confirmed once.',
       },
       {
         domainId: 'betting',
         nodeId: 'ledger',
         where: 'Settlement Ledger',
-        how: 'Idempotency keys on ledger entries make a replayed settlement a no-op.',
+        how: 'Each ledger entry carries an idempotency key, so replaying the same settlement does nothing the second time.',
       },
     ],
   },
   {
     id: 'reservation-ttl',
     name: 'Reservation / hold with TTL',
-    essence: 'Claim a scarce resource temporarily; auto-release it if not confirmed in time.',
+    essence: 'Claim a limited item for a short time, and release it automatically if it isn\'t confirmed in time.',
     problem:
-      'Two users want the same scarce resource, and one needs time to finish a multi-step action (pay) without locking everyone else out indefinitely.',
+      'Two people want the same limited item, and one needs a few minutes to finish several steps (like paying) — but you can\'t lock everyone else out forever while they do.',
     mechanism:
-      'Write a short-lived claim, ideally with a TTL so it self-expires. Confirm → make it permanent; timeout → the resource frees itself with no cleanup job required.',
+      'Write a short-lived claim with a TTL (a time-to-live, an expiry timer) so it clears itself. If they confirm, make the claim permanent. If time runs out, the item frees up on its own with no cleanup job needed.',
     instances: [
       {
         domainId: 'ticketing',
         nodeId: 'holdStore',
         where: 'Hold Store (Redis)',
-        how: 'SET hold:slot NX EX 480 — an atomic 8-minute claim while the buyer pays.',
+        how: 'SET hold:slot NX EX 480 — one atomic command that claims the slot for 8 minutes while the buyer pays, then expires on its own.',
       },
       {
         domainId: 'ecommerce',
         nodeId: 'inventory',
         where: 'Inventory DB',
-        how: 'Reserve-then-confirm: decrement stock into a reserved bucket with a TTL; unconfirmed reservations return stock.',
+        how: 'Reserve first, then confirm: move stock into a reserved bucket with a TTL; if the reservation isn\'t confirmed in time, the stock goes back.',
       },
     ],
   },
   {
     id: 'cache-hot-path',
     name: 'Cache the hot path',
-    essence: 'Serve the most frequent, latency-sensitive data from memory; keep the slow store off the critical path.',
+    essence: 'Serve the data people ask for most from fast memory, and keep the slow database out of the way.',
     problem:
-      'Your hottest path — high-volume reads or live data — would overwhelm the primary datastore and blow your latency budget.',
+      'Your busiest requests — huge numbers of reads, or live data — would overload the main database and make responses too slow.',
     mechanism:
-      'Put a fast in-memory layer (usually Redis) in front. Precompute or cache what\'s read most; fall back to the source of truth on a miss and repopulate.',
+      'Put a fast in-memory layer (usually Redis) in front. Pre-build or store the most-read data there. If it isn\'t in the cache (a miss), read from the source of truth and put a copy in the cache for next time.',
     instances: [
       {
         domainId: 'social',
         nodeId: 'cache',
         where: 'Feed Cache (Redis)',
-        how: 'Precomputed feeds in sorted sets — opening the app is a single fast read.',
+        how: 'Feeds are built ahead of time and kept in sorted sets, so opening the app is one fast read.',
       },
       {
         domainId: 'betting',
         nodeId: 'cache',
         where: 'Odds Cache (Redis)',
-        how: 'Live odds in memory + pub/sub fan-out to thousands of WebSocket clients.',
+        how: 'Live odds are kept in memory and pushed out (pub/sub) to thousands of connected WebSocket clients at once.',
       },
       {
         domainId: 'ecommerce',
         nodeId: 'cart',
         where: 'Cart Store (Redis)',
-        how: 'High-churn cart state in memory with a TTL, shared across the user\'s devices.',
+        how: 'The cart changes constantly, so it lives in memory with a TTL and is shared across the user\'s devices.',
       },
     ],
   },
   {
     id: 'async-decoupling',
     name: 'Async decoupling via queue / log',
-    essence: 'Move slow or spiky work out of the request path so it can retry independently.',
+    essence: 'Move slow or bursty work out of the request so it can run and retry on its own.',
     problem:
-      'Some work (payment, emails, fan-out, settlement) is slow, bursty, or failure-prone. Doing it synchronously couples your latency and availability to it.',
+      'Some work (payment, emails, fan-out, settlement) is slow, comes in bursts, or fails often. Doing it inside the request ties your speed and uptime to it.',
     mechanism:
-      'Hand the work to a durable queue or append-only log; workers process it asynchronously with retries and a dead-letter path. Pairs with idempotent consumers (see above), because the queue may redeliver.',
+      'Hand the work to a durable queue or append-only log, and let background workers do it later, with retries and a dead-letter path for messages that keep failing. Use it with idempotent workers (see above), because the queue may deliver the same message more than once.',
     instances: [
       {
         domainId: 'ticketing',
         nodeId: 'queue',
         where: 'Confirmation Queue',
-        how: 'The hold guarantees the slot; confirmation runs async so the request stays fast.',
+        how: 'The hold already guarantees the slot, so the confirmation runs in the background and the request stays fast.',
       },
       {
         domainId: 'social',
         nodeId: 'queue',
         where: 'Fan-out Workers',
-        how: 'New posts are pushed into followers\' feeds by async workers, not in the post request.',
+        how: 'Background workers copy a new post into each follower\'s feed, so that work doesn\'t slow down the post request.',
       },
       {
         domainId: 'ecommerce',
         nodeId: 'queue',
         where: 'Order Workers',
-        how: 'The post-checkout saga (payment, fulfillment, email) runs as async steps that retry / compensate.',
+        how: 'After checkout, the steps (payment, fulfillment, email) run in the background as a saga, each able to retry or undo (compensate) if something fails.',
       },
       {
         domainId: 'betting',
         nodeId: 'eventLog',
         where: 'Event Log (Kafka)',
-        how: 'Every bet is appended to an ordered log; settlement consumes it downstream.',
+        how: 'Every bet is added to the end of an ordered log, and settlement reads from that log later, downstream.',
       },
     ],
   },

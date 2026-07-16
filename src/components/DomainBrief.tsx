@@ -7,13 +7,13 @@ export function DomainBrief({ domain }: { domain: Domain }) {
   return (
     <aside className="inspector brief">
       <div className="brief__lead">
-        <div className="brief__step">Step 1 · Scope the problem</div>
+        <div className="brief__step">Step 1 · What are we building?</div>
         <h2 className="brief__title">{domain.name}</h2>
         <p className="brief__tagline">{domain.tagline}</p>
       </div>
 
       <div className="brief__block">
-        <h3 className="brief__h">Functional requirements</h3>
+        <h3 className="brief__h">What it must do (functional requirements)</h3>
         <ul className="brief__list">
           {domain.requirements.functional.map((r) => (
             <li key={r}>{r}</li>
@@ -22,7 +22,7 @@ export function DomainBrief({ domain }: { domain: Domain }) {
       </div>
 
       <div className="brief__block">
-        <h3 className="brief__h">Non-functional requirements</h3>
+        <h3 className="brief__h">How well it must do it (non-functional requirements)</h3>
         <ul className="brief__list brief__list--nf">
           {domain.requirements.nonFunctional.map((r) => (
             <li key={r}>{r}</li>
@@ -31,7 +31,7 @@ export function DomainBrief({ domain }: { domain: Domain }) {
       </div>
 
       <div className="brief__block">
-        <div className="brief__step">Step 2 · Back-of-the-envelope</div>
+        <div className="brief__step">Step 2 · Rough numbers to design for</div>
         <div className="scale">
           {domain.scale.map((s) => (
             <div key={s.metric} className="scale__row">
@@ -46,7 +46,7 @@ export function DomainBrief({ domain }: { domain: Domain }) {
       </div>
 
       <div className="brief__principle">
-        <div className="brief__step brief__step--accent">Step 5 · The principle that transfers</div>
+        <div className="brief__step brief__step--accent">Step 5 · The big lesson to carry over</div>
         <div className="principle__title">{domain.principle.title}</div>
         <p className="principle__body">{domain.principle.body}</p>
       </div>

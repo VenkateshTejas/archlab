@@ -45,15 +45,15 @@ export function InspectorPanel({
 
       {!decision && (
         <p className="inspector__hint">
-          This component is fixed in this design — it has no interesting swap to explore. Its job is
-          described above; the teachable decisions live on the highlighted ⇆ swap nodes.
+          You can't change this one — its job is described above. The parts you <em>can</em> change
+          are the boxes marked <span className="tag">⇆ swap</span>.
         </p>
       )}
 
       {decision && (
         <>
           <div className="istep">
-            <div className="istep__label">② The decision — pick an approach</div>
+            <div className="istep__label">② Pick an approach</div>
             <h3 className="inspector__question">{decision.question}</h3>
           </div>
 
@@ -68,7 +68,7 @@ export function InspectorPanel({
                 >
                   <div className="opt__head">
                     <span className="opt__label">{opt.label}</span>
-                    {opt.isDefault && <span className="opt__badge">reference choice</span>}
+                    {opt.isDefault && <span className="opt__badge">recommended</span>}
                   </div>
                   <div className="opt__summary">{opt.summary}</div>
                 </button>
@@ -105,7 +105,7 @@ export function InspectorPanel({
                   }`}
                 >
                   {activeOption.isDefault
-                    ? 'Highlighted components on the canvas are what this reference choice touches.'
+                    ? 'The highlighted boxes on the canvas are the parts this recommended option touches.'
                     : '⚠ The components pulsing red on the canvas are what this change impacts — that\'s the "what breaks" above, shown on the diagram.'}
                 </p>
               )}

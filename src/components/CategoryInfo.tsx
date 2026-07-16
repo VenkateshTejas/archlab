@@ -10,38 +10,38 @@ interface CategoryMeta {
 export const CATEGORY_META: Record<NodeCategory, CategoryMeta> = {
   client: {
     label: 'Client',
-    what: 'The user\'s device — the web or mobile app that renders the UI and originates every request.',
-    why: 'It sits outside your infrastructure, so you can never trust it for correctness or count on its state. Everything it sends must be validated server-side.',
+    what: 'The user\'s device — the website or mobile app. It shows the screen and starts every request.',
+    why: 'It runs on the user\'s phone or laptop, outside your control, so you can\'t trust it. Re-check everything it sends on the server, and never keep anything there you can\'t afford to lose.',
   },
   edge: {
     label: 'Edge',
-    what: 'Components at the network boundary, before your application logic: DNS, CDN, load balancers, API gateways, and admission control (e.g. a waiting room).',
-    why: 'They route, cache, authenticate, and protect — shaping and absorbing traffic at the edge so your services receive clean, bounded load instead of raw internet chaos.',
+    what: 'The layer that meets internet traffic before your real app logic runs: DNS, CDN, load balancers, API gateways, and a waiting room.',
+    why: 'They point users to the right place, cache things, check who\'s allowed in, and smooth out traffic — so your app gets clean, steady load instead of the raw chaos of the internet.',
   },
   compute: {
     label: 'Service',
-    what: 'Stateless application logic that processes a request: feed service, booking service, order service, auth, risk checks.',
-    why: 'These do the actual work and scale horizontally — you add more identical instances under load. They hold no durable state themselves, which is exactly what makes them easy to scale.',
+    what: 'The programs that do the actual work of a request — build a feed, place a booking, take an order, check a login. They keep no memory of their own between requests.',
+    why: 'Because each copy remembers nothing on its own, any copy can handle any request. To handle more load you just run more identical copies. That is exactly what makes them easy to scale.',
   },
   cache: {
     label: 'Cache',
-    what: 'A fast in-memory store (usually Redis) sitting on the hot path in front of the durable store.',
-    why: 'It serves the most-read or most-contended data in sub-milliseconds, absorbing load that would otherwise crush the database. Its data is derivable, so losing it is a performance hit, not a correctness one.',
+    what: 'A fast store that keeps data in memory (usually Redis), sitting in front of the slower database and holding the things people ask for most.',
+    why: 'It answers hot requests in well under a millisecond and takes load off the database. Its data can always be rebuilt from the database, so losing it slows things down but doesn\'t lose anything for good.',
   },
   datastore: {
     label: 'Datastore',
-    what: 'The durable source of truth: relational DBs, wide-column stores, search indexes, read replicas, and object storage.',
-    why: 'Data here must survive restarts and be authoritative. The correctness-critical constraints (unique indexes, conditional writes, append-only ledgers) live at this layer because it physically cannot be bypassed.',
+    what: 'The permanent source of truth: SQL databases, big NoSQL stores, search indexes, read-only copies (replicas), and file/blob storage.',
+    why: 'This data has to survive restarts and be the final word. The rules that guarantee correctness (like a unique index or an append-only ledger) live here, because this is the one layer nothing can sneak around.',
   },
   queue: {
     label: 'Async',
-    what: 'Message queues and append-only event logs (e.g. Kafka) plus the workers that consume them.',
-    why: 'They decouple slow, spiky, or failure-prone work from the request path so it can retry independently. The trade is eventual consistency — and consumers must be idempotent, because queues redeliver.',
+    what: 'Message queues and append-only event logs (like Kafka), plus the worker programs that read from them and do the work.',
+    why: 'They take slow or bursty work off the main request so it can happen in the background and retry if it fails. The catch: the work finishes a bit later (not instantly), and a message can arrive more than once — so the worker must be safe to run twice on the same message (idempotent).',
   },
   external: {
     label: 'External',
-    what: 'Third-party services you depend on but do not own — payment processors, push/SMS providers.',
-    why: 'They are outside your control: slow, occasionally flaky, and metered. So you call them idempotently (safe to retry) and usually behind a queue, never holding a lock or transaction open across the call.',
+    what: 'Services you rely on but don\'t run yourself — like a payment processor or an SMS / push provider.',
+    why: 'They\'re out of your control: slow, sometimes flaky, and they charge per call. So you call them in a way that\'s safe to retry (idempotent), usually from a background queue, and never hold a database lock open while waiting for them.',
   },
 }
 

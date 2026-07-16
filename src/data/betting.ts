@@ -9,88 +9,88 @@ import type { Domain } from '../types'
 export const betting: Domain = {
   id: 'betting',
   name: 'Live Betting Exchange',
-  tagline: 'Push odds in real time; accept bets under spikes; settle money correctly.',
+  tagline: 'Send odds to users as they change, take a flood of bets at once, and get the money exactly right.',
   referenceNote:
-    'Modeled on a live in-play betting exchange (peer-to-peer, Betfair-style — odds emerge from the order book). A goal triggers a write spike and correctness of money is non-negotiable. (A traditional sportsbook differs: a separate pricing/trading engine sets odds and you bet against the house, not other users.)',
+    'Based on a live in-play betting exchange, where users bet against each other (peer-to-peer, like Betfair) and the odds come from users\' own buy/sell orders (the order book). When a goal is scored, everyone bets at once, so the system gets a sudden flood of writes and the money math has to be perfect. (A regular sportsbook works differently: a separate pricing engine sets the odds and you bet against the house, not other users.)',
   requirements: {
     functional: [
-      'Stream live, constantly-changing odds to many clients',
-      'Place a bet at the current price',
-      'Settle bets and update balances when the event resolves',
-      'Keep a full audit trail of every bet and payout',
+      'Send live, always-changing odds to many users at once',
+      'Let a user place a bet at the price shown right now',
+      'When the event ends, pay out bets and update balances',
+      'Keep a full record of every bet and payout',
     ],
     nonFunctional: [
-      'Ultra-low-latency odds — push, do not poll',
-      'Accept a burst of bets at one instant (a goal) without serializing on locks',
-      'Money must always balance and be fully auditable',
-      'Strong consistency for funds; freshness for odds',
+      'Get odds to users almost instantly — the server pushes them, users do not keep asking',
+      'Handle a burst of bets that all land at the same moment (a goal) without making them wait in line for a lock',
+      'The money must always add up and be fully checkable',
+      'Money has to be exactly right; odds just have to be fresh',
     ],
   },
   scale: [
-    { metric: 'Odds updates', value: 'several / sec per market' },
-    { metric: 'Bet burst at a key moment', value: 'thousands/sec', note: 'on a single market' },
-    { metric: 'Concurrent connections', value: '100k+', note: 'long-lived WebSockets' },
-    { metric: 'Ledger accuracy', value: 'balances to the cent, always' },
+    { metric: 'Odds changes', value: 'several / sec per market' },
+    { metric: 'Bet flood at a big moment', value: 'thousands/sec', note: 'all on one market' },
+    { metric: 'Users connected at once', value: '100k+', note: 'each holds an open WebSocket connection' },
+    { metric: 'Money accuracy', value: 'balances to the cent, always' },
   ],
   principle: {
-    title: 'Remove the lock by removing concurrency; never mutate money in place',
+    title: 'Get rid of the traffic jam by handling bets one at a time; never overwrite money, only add to it',
     body:
-      'Under a burst, optimistic and pessimistic locks both lose — so you eliminate contention instead of managing it: funnel one market through a single in-memory writer that processes bets in order, backed by an append-only event log as the source of truth. For money, never overwrite a balance — append double-entry rows so every cent is derivable and auditable. Hot contention → serialize; money → append, never destroy.',
+      'When a flood of bets hits at once, both ways of using locks (optimistic and pessimistic) fall apart — so instead of managing the traffic jam, you avoid it: send every bet for one market through a single worker that lives in memory and handles them one after another, and record each bet in an add-only event log that is the official record. For money, never change a balance in place — instead add matched pairs of entries (double-entry) so every cent can be recalculated and checked. In short: when many things fight for the same spot, line them up; for money, always add a new record, never destroy the old one.',
   },
   nodes: [
     {
       id: 'client',
       label: 'Client',
       category: 'client',
-      role: 'Web & mobile apps. Subscribes to a live odds stream and places bets — often everyone at once the instant a goal goes in.',
+      role: 'Web and mobile apps. Listens for a live stream of odds and places bets — often everyone at the same instant a goal goes in.',
       position: { x: 0, y: 340 },
     },
     {
       id: 'dns',
       label: 'DNS',
       category: 'edge',
-      role: 'Resolves the domain to a regional endpoint (it can geo-steer via latency-based records). It is a lookup, not a traffic hop — the client then connects directly to the load balancer.',
+      role: 'Turns the website name into an address to connect to, and can send users to a nearby region (using records that pick the lowest-latency option). It is just a lookup, not a stop the traffic passes through — after it, the client connects straight to the load balancer.',
       position: { x: 220, y: 180 },
     },
     {
       id: 'lb',
       label: 'Load Balancer',
       category: 'edge',
-      role: 'Spreads bet-placement API traffic across gateway instances and health-checks them.',
+      role: 'Spreads incoming bet requests evenly across the gateway servers and checks that each one is healthy.',
       position: { x: 440, y: 340 },
     },
     {
       id: 'oddsGateway',
       label: 'Odds Delivery',
       category: 'edge',
-      role: 'Holds long-lived connections and pushes constantly-changing odds to thousands of clients, subscribing to the odds cache and fanning updates out.',
+      role: 'Keeps open connections to thousands of users and pushes the always-changing odds to them. It listens to the odds cache and forwards each update out to everyone.',
       position: { x: 680, y: 120 },
       decision: {
-        question: 'How do we get live odds to clients?',
+        question: 'How do we get live odds to users?',
         options: [
           {
             id: 'websocket',
             label: 'WebSocket push',
             isDefault: true,
-            summary: 'Persistent connections; server pushes odds the instant they change.',
+            summary: 'The connection stays open, and the server pushes new odds the moment they change.',
             whatBreaks:
-              'Nothing for latency — clients see new odds immediately. But you now hold many long-lived connections, so the gateway must manage connection state and scale horizontally with a pub/sub fan-out behind it.',
+              'Speed is not a problem — users see new odds right away. But now you are holding many open connections at once, so the gateway has to keep track of every connection and add more servers as you grow, with a fan-out layer (that copies each update to all of them) behind it.',
             tradeoffs:
-              'Lowest latency and no wasted requests. Costs you stateful connection management and a fan-out layer (e.g. Redis pub/sub) to broadcast updates.',
+              'Fastest option, and no wasted requests. The cost is having to track every open connection and run a fan-out layer (for example Redis pub/sub) to send each update to everyone.',
             why:
-              'Odds move multiple times per second on a live event; pushing is the only way to keep clients accurate. Stale odds mean you accept bets at the wrong price — a direct financial risk.',
+              'Odds change several times a second during a live event, and pushing is the only way to keep users up to date. If the odds a user sees are out of date, you take bets at the wrong price — which loses money.',
             affects: ['matchingEngine', 'cache'],
           },
           {
             id: 'polling',
             label: 'HTTP polling',
-            summary: 'Clients re-request odds every second or two.',
+            summary: 'Users ask again for the odds every second or two.',
             whatBreaks:
-              'Clients are always a poll-interval stale — they may bet on odds that already moved. At scale, thousands of clients polling every second is a self-inflicted request flood.',
+              'A user\'s odds are always as old as the gap between checks — they might bet on odds that already changed. And with thousands of users asking every second, you create a flood of requests on yourself.',
             tradeoffs:
-              'Stateless and trivial to scale behind a normal load balancer + cache. But it trades freshness and wastes huge request volume on "nothing changed".',
+              'No open connections to track, so it is easy to scale behind a normal load balancer and cache. But the odds are less fresh, and you waste huge numbers of requests just to hear "nothing changed".',
             why:
-              'Acceptable for slowly-changing data (pre-match odds). For live in-play, the staleness window is a real liability.',
+              'Fine for odds that change slowly (before the match starts). During live play, the delay between checks is a real problem.',
             affects: ['cache'],
           },
         ],
@@ -100,67 +100,67 @@ export const betting: Domain = {
       id: 'gateway',
       label: 'Bet API Gateway',
       category: 'edge',
-      role: 'Front door for bet placement: TLS, authentication, and rate limiting before a bet reaches risk checks and the engine.',
+      role: 'The front door for placing bets: handles the secure connection (TLS), checks who the user is, and caps how many requests they can send, all before a bet reaches the risk checks and the engine.',
       position: { x: 680, y: 400 },
     },
     {
       id: 'auth',
       label: 'Auth Service',
       category: 'compute',
-      role: 'Validates the bettor\'s session and that the account is verified and permitted to bet (KYC / jurisdiction gating).',
+      role: 'Confirms the user is logged in, and that their account is verified and allowed to bet (identity checks and location rules — KYC and jurisdiction gating).',
       position: { x: 680, y: 580 },
     },
     {
       id: 'riskSvc',
       label: 'Risk / Limits Service',
       category: 'compute',
-      role: 'Pre-trade checks before a bet reaches the engine: responsible-gambling limits, and — critically — it places a synchronous HOLD on the stake (a reservation), not just a stale read. Without that hold, many concurrent bets could each pass a balance check and collectively overspend. The hold is an atomic conditional decrement on a strongly-consistent available-balance counter (reconciled to the ledger); a snapshot is only the fast read, never the serialization point.',
+      role: 'Runs checks before a bet reaches the engine: responsible-gambling limits, and — most importantly — it places a HOLD on the stake right away (setting that money aside), rather than just reading the balance (which might be out of date). Without that hold, many bets arriving at once could each see enough money and, together, spend more than the user has. The hold is done as one all-or-nothing step that subtracts from an always-accurate "money available" counter (later checked against the ledger). A quick read of the balance is only for speed — it is never what keeps the bets in order.',
       position: { x: 940, y: 440 },
     },
     {
       id: 'matchingEngine',
       label: 'Bet Matching Engine',
       category: 'compute',
-      role: 'Accepts bets under a burst of simultaneous requests — the contention hot spot the whole design is built around. On an exchange a bet matches against opposing users\' back/lay offers, with any unmatched remainder resting in the order book (and the top of book *is* the current odds).',
+      role: 'Takes in bets when a burst of them arrives at the same time — the busiest, most fought-over spot, which the whole design is built around. On an exchange, a bet is matched against other users\' opposing offers (bets for and against, called back and lay); whatever is left unmatched waits in the order book (the list of pending offers), and the best available offers there *are* the current odds.',
       position: { x: 940, y: 200 },
       decision: {
-        question: 'How do we accept bets correctly during a spike (a goal just happened)?',
+        question: 'How do we take bets correctly during a spike (a goal just happened)?',
         options: [
           {
             id: 'event-sourcing',
             label: 'In-memory engine + event log',
             isDefault: true,
-            summary: 'Single-writer in-memory matcher; append every bet to a durable event log.',
+            summary: 'One worker in memory matches the bets; every bet is also added to a durable event log (a saved list on disk).',
             whatBreaks:
-              'Little if designed right — a single-threaded matcher per market processes bets in deterministic order with no lock contention. The one trap: because the append-only log is your replay source-of-truth, the input must be durably journaled *before* you acknowledge the bet (LMAX-style). Ack first and append later and a crash silently loses accepted bets.',
+              'Little, if built right — one worker per market (running on a single thread) handles bets in a fixed order, so no bets fight over a lock. The one trap: because you rebuild state by replaying that add-only log, each bet must be safely saved to the log *before* you tell the user it was accepted (the LMAX approach). If you confirm first and save later, a crash quietly loses bets you already accepted.',
             tradeoffs:
-              'Extremely high throughput and clean auditability (replay the log to rebuild state). Costs you the complexity of event sourcing, snapshots, and failover of the in-memory state.',
+              'Very high throughput and easy to check (replay the log to rebuild the state). The cost is the extra complexity: this event-log style, taking periodic snapshots, and recovering the in-memory worker if it fails.',
             why:
-              'This is how exchanges and trading venues actually work — the LMAX Disruptor pattern (LMAX is an FX venue). Serializing one market through one writer removes lock contention in the matching path; the stake is already held upstream by the risk service, so final settlement can be pushed downstream and async, and the event log gives you a perfect audit trail for money.',
+              'This is how real exchanges and trading venues work — the LMAX Disruptor pattern (LMAX is a currency-trading venue). Sending one market through one worker, one bet at a time, means no fighting over locks in the matching step. The stake was already set aside earlier by the risk service, so the final payout can happen later and in the background, and the event log gives you a perfect record of the money.',
             affects: ['eventLog', 'cache'],
           },
           {
             id: 'db-txn',
             label: 'DB transaction per bet',
-            summary: 'Each bet is a row insert + balance update in one ACID transaction.',
+            summary: 'Each bet adds a row and updates the balance together in one all-or-nothing database transaction.',
             whatBreaks:
-              'At the moment of a goal, thousands of bets hit at once; row locks on the same market and on user balances serialize through the DB and latency spikes — exactly when speed matters most.',
+              'When a goal is scored, thousands of bets arrive at once; locks on the same market and on user balances force them through the database one at a time, and response times spike — right when speed matters most.',
             tradeoffs:
-              'Simple, strongly consistent, easy to reason about. But the DB becomes the contention point under the spikes that define this domain.',
+              'Simple, always consistent, and easy to reason about. But the database becomes the bottleneck during the very spikes that define this problem.',
             why:
-              'Fine for low-volume or pre-match betting. The event-sourced engine exists precisely because per-bet DB transactions do not hold up under in-play bursts.',
+              'Fine for low volume or betting before the match. The event-log engine exists precisely because a database transaction per bet cannot keep up with in-play bursts.',
             affects: ['ledger', 'cache'],
           },
           {
             id: 'optimistic-bet',
             label: 'Optimistic concurrency',
-            summary: 'Read balance/odds, write conditionally, retry on conflict.',
+            summary: 'Read the balance and odds, only write if nothing changed in the meantime, and try again if it did.',
             whatBreaks:
-              'During a burst, conflicts are the norm, not the exception — so most bets retry, adding latency and load right at the peak moment.',
+              'During a burst, clashes are the rule, not the exception — so most bets have to try again, adding delay and load at the busiest moment.',
             tradeoffs:
-              'No locks held; good when collisions are rare. But in-play betting is defined by everyone acting at the same instant, which is the worst case for optimistic retries.',
+              'No locks are held, which is great when clashes are rare. But live betting is defined by everyone acting at the same instant, the worst case for this retry approach.',
             why:
-              'Reasonable for low-contention markets. The contention profile of live betting is exactly why a serialized engine wins here.',
+              'Reasonable when few bets clash. The fact that live betting causes constant clashes is exactly why handling bets one at a time wins here.',
             affects: ['ledger'],
           },
         ],
@@ -170,34 +170,34 @@ export const betting: Domain = {
       id: 'cache',
       label: 'Odds Cache (Redis)',
       category: 'cache',
-      role: 'Holds current odds in memory plus a pub/sub channel that fans updates out to every odds-delivery node.',
+      role: 'Keeps the current odds in memory and has a publish/subscribe channel that sends each update out to every odds-delivery server.',
       position: { x: 1200, y: 80 },
       decision: {
-        question: 'What holds the live odds and fans them out?',
+        question: 'What stores the live odds and sends them out to everyone?',
         options: [
           {
             id: 'redis-pubsub',
             label: 'Redis (KV + pub/sub)',
             isDefault: true,
-            summary: 'Current odds in memory; publish changes to subscribed gateways.',
+            summary: 'Keep the current odds in memory and publish each change to the gateways that subscribed.',
             whatBreaks:
-              'Nothing — sub-ms reads for current odds and a built-in pub/sub to broadcast updates to every WebSocket node. Odds are ephemeral live state, so losing them on restart just means recomputing from the engine.',
+              'Nothing — reads take under a millisecond, and the built-in publish/subscribe sends each update to every WebSocket server. Odds are temporary live data, so if they are lost on a restart you just recompute them from the engine.',
             tradeoffs:
-              'Fast and gives you fan-out for free. Adds an in-memory store; pub/sub is fire-and-forget (at-most-once), so a disconnected gateway misses ticks — but because odds are last-value-wins snapshots, the next tick carries the current price and the gap self-heals (use Redis Streams or re-read the KV if you need a guaranteed backlog).',
+              'Fast, and you get the send-to-everyone feature for free. It adds an in-memory store; publish/subscribe is send-and-forget (each message is delivered at most once), so a gateway that briefly disconnects misses some updates — but since each update is just the latest full price, the next update carries the current price and the gap fixes itself (use Redis Streams or re-read the stored value if you need a guaranteed history of updates).',
             why:
-              'Live odds are hot, ephemeral, read-by-everyone state with a fan-out need — squarely Redis territory. Pairing KV reads with pub/sub broadcast is the standard pattern.',
+              'Live odds are hot, short-lived, read-by-everyone data that has to be sent to many places — right in Redis\'s wheelhouse. Combining fast reads with publish/subscribe broadcast is the standard pattern.',
             affects: ['oddsGateway'],
           },
           {
             id: 'db-odds',
             label: 'Read odds from DB',
-            summary: 'Serve current odds straight from the primary database.',
+            summary: 'Serve the current odds straight from the main database.',
             whatBreaks:
-              'Thousands of clients reading multi-times-per-second odds hammer the DB, and you have no native fan-out to push updates — you are back to polling. Latency and load both suffer.',
+              'Thousands of users reading odds several times a second pound the database, and it has no built-in way to push updates out — so you are back to users asking over and over. Both speed and load get worse.',
             tradeoffs:
-              'One fewer system and a single source of truth. But the DB is the wrong tool for ultra-hot, ultra-fresh, broadcast-shaped reads.',
+              'One fewer system to run, and a single source of truth. But a database is the wrong tool for reads that are this hot, this fresh, and need to go out to everyone.',
             why:
-              'Only viable at tiny scale. Shown to make the cache + pub/sub rationale concrete.',
+              'Only workable at very small scale. Shown to make the case for the cache plus publish/subscribe clearer.',
             affects: ['oddsGateway'],
           },
         ],
@@ -207,55 +207,55 @@ export const betting: Domain = {
       id: 'eventLog',
       label: 'Event Log (Kafka)',
       category: 'queue',
-      role: 'Durable, ordered, append-only log of every bet — the source of truth you replay to rebuild engine state and drive settlement.',
+      role: 'A durable, in-order, add-only log of every bet — the official record you replay to rebuild the engine\'s state and to drive payouts.',
       position: { x: 1200, y: 300 },
     },
     {
       id: 'settlementSvc',
       label: 'Settlement Service',
       category: 'compute',
-      role: 'When the official result arrives (from the results feed), it joins that outcome against the open bets in the event log, computes who won, and posts the debits/credits to the ledger — idempotently, so a replay never double-pays. You cannot determine winners from the bet log alone; you need the authoritative result.',
+      role: 'When the official result arrives (from the results feed), it matches that outcome against the open bets in the event log, works out who won, and records the money in and out in the ledger — in a way that is safe to repeat, so replaying it never pays anyone twice. You cannot tell who won from the bet log alone; you need the official result.',
       position: { x: 1200, y: 500 },
     },
     {
       id: 'resultsFeed',
       label: 'Results Feed',
       category: 'external',
-      role: 'Third-party data feed providing the authoritative event outcome (final score / market result). Settlement is impossible without it: the bet log says who bet what, the results feed says what actually happened.',
+      role: 'An outside data feed that provides the official outcome of the event (final score or market result). You cannot pay out without it: the bet log says who bet what, and the results feed says what actually happened.',
       position: { x: 960, y: 640 },
     },
     {
       id: 'ledger',
       label: 'Settlement Ledger',
       category: 'datastore',
-      role: 'Records stake holds, settlements, payouts, and balances — must always balance to the cent and stay fully auditable.',
+      role: 'Records stake holds, settlements, payouts, and balances — it must always add up to the cent and stay fully checkable.',
       position: { x: 1440, y: 360 },
       decision: {
-        question: 'How do we model the money so it is always correct?',
+        question: 'How do we track the money so it is always correct?',
         options: [
           {
             id: 'double-entry',
             label: 'Double-entry, append-only',
             isDefault: true,
-            summary: 'Every movement is two balanced entries; balances are derived, never overwritten.',
+            summary: 'Every money movement is written as two matching entries; balances are added up from those entries, never overwritten.',
             whatBreaks:
-              'Nothing — you can never "lose" money because every debit has a matching credit and the log is immutable. A balance is a sum of entries you can recompute and audit at any time.',
+              'Nothing — you can never "lose" money, because every amount taken out has a matching amount put in somewhere, and the log can never be changed. A balance is just the sum of the entries, which you can recompute and check at any time.',
             tradeoffs:
-              'Auditable, tamper-evident, and reconcilable — the accounting standard. Costs more storage and a derive-balance step (often snapshotted) instead of reading one number.',
+              'Checkable, tamper-evident, and easy to reconcile — the standard way accounting is done. It costs more storage and an extra step to add up the balance (often sped up with saved snapshots) instead of reading a single number.',
             why:
-              'Money demands an audit trail and a guarantee it always balances. Append-only double-entry pairs perfectly with the bet event log, and idempotency keys on each entry make retries safe.',
+              'Money needs a full paper trail and a guarantee that it always adds up. This add-only, two-matching-entries style fits perfectly with the bet event log, and giving each entry a unique key means a repeated attempt is not counted twice.',
             affects: ['settlementSvc', 'riskSvc'],
           },
           {
             id: 'mutable-balance',
             label: 'Mutable balance column',
-            summary: 'Store one balance number per user and update it in place.',
+            summary: 'Keep one balance number per user and change it in place.',
             whatBreaks:
-              'No history — a bug or a lost update silently corrupts a balance with no way to audit or reconstruct what happened. Concurrent updates risk lost writes unless carefully locked.',
+              'No history — a bug or a lost update quietly corrupts a balance, with no way to check or rebuild what happened. Updates arriving at once can overwrite each other unless you lock carefully.',
             tradeoffs:
-              'Reading a balance is a single fast lookup and storage is tiny. But you sacrifice auditability and the safety net of a derivable, balanced ledger.',
+              'Reading a balance is one fast lookup and takes almost no storage. But you give up the ability to check the numbers and the safety net of a ledger you can recompute and prove adds up.',
             why:
-              'Tempting for simplicity and fine for non-money counters. For real funds, the lack of an audit trail makes it the wrong call — regulators and reconciliation both demand history.',
+              'Tempting because it is simple, and fine for counters that are not money. For real funds, the missing paper trail makes it the wrong choice — both regulators and reconciliation need the history.',
             affects: ['settlementSvc', 'riskSvc'],
           },
         ],
@@ -265,7 +265,7 @@ export const betting: Domain = {
       id: 'monitoring',
       label: 'Observability',
       category: 'compute',
-      role: 'Metrics, logs, and traces — engine latency, bet throughput, and ledger reconciliation alerts. In money systems, a silent imbalance is the nightmare you watch for.',
+      role: 'Metrics, logs, and traces — engine response times, how many bets go through, and alerts if the ledger stops adding up. In money systems, the thing you fear most is the books quietly not balancing.',
       position: { x: 1440, y: 120 },
     },
   ],

@@ -30,10 +30,10 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
             Learn system design by taking real architectures <em>apart</em>.
           </p>
           <p className="landing__sub">
-            Open a best-in-class design, click any component to see the real decision behind it,
-            then <strong>swap the technology and watch what breaks downstream</strong> — with the
-            tradeoffs an interviewer actually probes for. Curated and hand-authored, not an LLM
-            guessing.
+            Open a real, proven design, click any part to see why it was built that way, then{' '}
+            <strong>swap a piece and watch what breaks</strong> — in plain language, with the
+            trade-offs an interviewer actually asks about. Every explanation is hand-written and
+            fact-checked, not guessed by an AI.
           </p>
           <div className="landing__cta">
             <button className="landing__btn landing__btn--primary" onClick={() => onEnter()}>

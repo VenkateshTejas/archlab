@@ -9,81 +9,81 @@ import type { Domain } from '../types'
 export const socialMedia: Domain = {
   id: 'social',
   name: 'Social Media Feed',
-  tagline: 'Serve a personalized feed to millions — fast reads beat everything.',
+  tagline: 'Show millions of people their own feed — and make it load fast.',
   referenceNote:
-    'Modeled on Instagram / Twitter timelines. Reads outnumber writes ~100:1, so the whole design optimizes the read path.',
+    'Based on Instagram / Twitter timelines. People read the feed about 100 times for every 1 post they make, so the whole design is built to make reading fast.',
   requirements: {
     functional: [
-      'Post photos / videos',
+      'Post photos and videos',
       'Follow and unfollow other users',
-      'View a personalized, time-ordered feed',
-      'View any user\'s profile and posts',
+      'See a personal feed, newest posts first',
+      'See any user\'s profile and posts',
     ],
     nonFunctional: [
-      'Feed loads in <200ms — reads are the hot path',
-      'Eventual consistency is acceptable (a like count can lag a second)',
-      'High availability favored over strict consistency',
-      'Scale to 100M+ users, including celebrity fan-out',
+      'Feed loads in under 200ms — reading the feed is the most common action',
+      'It is fine if data takes a moment to catch up (a like count can lag a second)',
+      'Better to always be up than to always be perfectly in sync',
+      'Handle 100M+ users, including celebrities with huge followings',
     ],
   },
   scale: [
-    { metric: 'Read : write ratio', value: '~100 : 1', note: 'this shapes everything' },
+    { metric: 'Reads vs. writes', value: '~100 : 1', note: 'this shapes every decision' },
     { metric: 'Daily active users', value: '100M+' },
-    { metric: 'Celebrity followers', value: 'up to ~100M', note: 'the "hot key" problem' },
-    { metric: 'Feed read latency target', value: '<200ms' },
+    { metric: 'Celebrity followers', value: 'up to ~100M', note: 'the "hot key" problem — one post reaches a huge crowd' },
+    { metric: 'Target feed load time', value: '<200ms' },
   ],
   principle: {
-    title: 'Optimize the path you take most',
+    title: 'Make the thing you do most the fast thing',
     body:
-      'Reads outnumber writes ~100:1, so you pay the cost at write time (fan-out-on-write) to make the common path — opening the app — instant. The art is spotting the outlier that breaks your model: a celebrity\'s 100M-follower fan-out would explode, so you special-case it with a read-time pull (hybrid). Shape the system around the dominant access pattern, then handle the exception explicitly.',
+      'People read the feed about 100 times for every 1 post. So you do the extra work when someone posts (this is called fan-out-on-write: copy the post into each follower\'s feed ahead of time), which makes the common action — opening the app — instant. The trick is spotting the case that breaks this plan: copying a celebrity\'s post to 100M followers would be far too much work, so you treat celebrities differently and pull their posts in when a feed is read instead (a mix, or "hybrid"). Build the system around what people do most, then handle the exceptions on purpose.',
   },
   nodes: [
     {
       id: 'client',
       label: 'Client',
       category: 'client',
-      role: 'Web & mobile apps. Opens the app and expects an instant, personalized feed; also uploads new photos/videos.',
+      role: 'The web and mobile apps people use. Opens the app expecting an instant, personal feed, and uploads new photos and videos.',
       position: { x: 0, y: 320 },
     },
     {
       id: 'dns',
       label: 'DNS',
       category: 'edge',
-      role: 'Resolves the domain to a regional endpoint (it can geo-steer via latency-based records). It is a lookup, not a traffic hop — the client then connects directly to the load balancer or CDN.',
+      role: 'Turns the domain name into a server address, and can point you at the closest region for the lowest delay. It is just a lookup — traffic does not flow through it; the client then connects straight to the load balancer or CDN.',
       position: { x: 220, y: 160 },
     },
     {
       id: 'cdn',
       label: 'CDN',
       category: 'edge',
-      role: 'Serves photos/videos from edge locations close to the user — the bulk of all bytes. Pulls from object storage (the origin) on a miss.',
+      role: 'A network of servers spread around the world (a CDN) that delivers photos and videos from a location near each user — this is most of the data sent. If a nearby server does not have the file yet, it fetches it from object storage (the original copy).',
       position: { x: 220, y: 480 },
       decision: {
-        question: 'How do we serve media (the photos themselves)?',
+        question: 'How do we deliver the photos and videos themselves?',
         options: [
           {
             id: 'cdn-s3',
             label: 'CDN + S3',
             isDefault: true,
-            summary: 'Store blobs in object storage; serve via a CDN edge cache.',
+            summary: 'Keep the files in object storage, and deliver them through the CDN\'s worldwide servers.',
             whatBreaks:
-              'Nothing — this offloads the vast majority of bytes from your app entirely. The app only ever returns small JSON with media URLs.',
+              'Nothing — this takes almost all the heavy data off your app servers. The app only ever returns a small bit of text with links to the files.',
             tradeoffs:
-              'Edge caching means low latency globally and trivial scaling for media. You pay for storage + egress and must handle cache invalidation on edits/deletes.',
+              'Files load fast everywhere and scale easily. You pay for storage and for data sent out, and you have to remember to clear old copies from the CDN when a file is edited or deleted.',
             why:
-              'Media is large, static, and read-heavy — the textbook CDN case. Keeping bytes off your app servers is the single biggest scalability win here.',
+              'Photos and videos are large, do not change, and are viewed a lot — exactly what a CDN is for. Keeping this data off your app servers is the single biggest win for handling scale here.',
             affects: ['appSvc', 'objectStore'],
           },
           {
             id: 'serve-from-app',
             label: 'Serve from app servers',
-            summary: 'App reads blobs from disk/DB and streams them to clients.',
+            summary: 'The app reads the files itself and sends them straight to users.',
             whatBreaks:
-              'Your app servers become bandwidth-bound — a few viral videos saturate their network and CPU, starving the actual API. Latency is terrible for distant users.',
+              'The app servers run out of network capacity — a few viral videos use up all their bandwidth and CPU, leaving nothing for the real API work. And it is slow for users far away.',
             tradeoffs:
-              'Simplest possible setup, one less system. But it does not scale past a small user base and wastes expensive compute on byte-pushing.',
+              'Simplest possible setup, one less system to run. But it stops working once you grow past a small user base, and it wastes pricey servers on just shipping files.',
             why:
-              'Only acceptable at toy scale. Shown to make the CDN payoff obvious.',
+              'Only OK for a tiny app. Shown here to make the value of a CDN obvious.',
             affects: ['appSvc'],
           },
         ],
@@ -93,67 +93,67 @@ export const socialMedia: Domain = {
       id: 'lb',
       label: 'Load Balancer',
       category: 'edge',
-      role: 'Spreads API traffic across gateway/app instances and health-checks them — the entry point to the backend fleet.',
+      role: 'Spreads incoming requests evenly across the servers and checks that each one is healthy — the front door to the backend servers.',
       position: { x: 440, y: 320 },
     },
     {
       id: 'gateway',
       label: 'API Gateway',
       category: 'edge',
-      role: 'Front door for API calls: TLS, authentication, rate limiting, and routing to the feed, upload, or search services.',
+      role: 'The entry point for API calls. It handles encryption, checks who the user is, limits how often anyone can call, and sends each request to the right service (feed, upload, or search).',
       position: { x: 660, y: 180 },
     },
     {
       id: 'auth',
       label: 'Auth Service',
       category: 'compute',
-      role: 'Validates tokens so every request is tied to a user — needed to build *their* feed and to attribute posts, likes, and follows.',
+      role: 'Confirms who is making each request, so the system knows whose feed to build and who to credit for posts, likes, and follows.',
       position: { x: 660, y: 460 },
     },
     {
       id: 'appSvc',
       label: 'Feed Service',
       category: 'compute',
-      role: 'Assembles and returns a user\'s timeline on read — reading precomputed feeds from cache and falling back to the store. This is where the feed-generation strategy lives.',
+      role: 'Builds and returns a user\'s feed when they open the app. It reads feeds that were prepared ahead of time from the cache, and falls back to the database if they are not there. This is where the choice of how to build the feed lives.',
       position: { x: 900, y: 200 },
       decision: {
-        question: 'How do we build a user\'s feed? (The defining decision.)',
+        question: 'How do we build a user\'s feed? (The key decision.)',
         options: [
           {
             id: 'fanout-write',
             label: 'Fan-out on write',
             isDefault: true,
-            summary: 'On post, push the post id into every follower\'s feed cache.',
+            summary: 'When someone posts, copy that post into every follower\'s ready-made feed right away.',
             whatBreaks:
-              'Reads are trivially fast (just read your precomputed list) — but a celebrity with 100M followers triggers up to 100M feed-cache writes per post (in practice only to active followers, but still enormous). That "hot key" makes pure fan-out-on-write explode.',
+              'Reading is very fast (you just read your ready-made list) — but a celebrity with 100M followers means up to 100M copies to write for a single post (in practice only to followers who are active, but still a huge number). This "hot key" is what makes pure fan-out-on-write blow up.',
             tradeoffs:
-              'Moves work to write time so reads are cheap — perfect for a read-heavy system. But write amplification is brutal for high-follower accounts.',
+              'Does the work when someone posts so reading is cheap — perfect when reads far outnumber writes. But for accounts with tons of followers, the number of copies per post gets out of hand (write amplification).',
             why:
-              'For the 99% of users with normal follower counts, precomputing the feed makes opening the app instant. It is the right default — you just need a hybrid escape hatch for celebrities.',
+              'For the 99% of users with normal follower counts, preparing the feed ahead of time makes opening the app instant. It is the right default — you just need a special path for celebrities.',
             affects: ['cache', 'queue', 'db'],
           },
           {
             id: 'fanout-read',
             label: 'Fan-out on read',
-            summary: 'On feed open, pull recent posts from everyone you follow and merge.',
+            summary: 'When someone opens the app, gather recent posts from everyone they follow and combine them.',
             whatBreaks:
-              'Opening the app now does N queries (one per followee) and a merge-sort — slow and expensive on the read path, which is your hottest path. Latency spikes for users following many accounts.',
+              'Opening the app now means one lookup for each account you follow, then sorting them all together — slow and costly, and this is your most common action. It gets especially slow for people who follow many accounts.',
             tradeoffs:
-              'Writes are cheap (just store the post once); no write amplification. But it shifts cost to the read path, which you do far more often.',
+              'Posting is cheap (you just save the post once) with no copies to make. But it moves the cost onto reading, which you do far more often.',
             why:
-              'Great specifically for celebrity posts — you do NOT pre-push those. The real answer is hybrid: fan-out-on-write for normal users, fan-out-on-read for the accounts they follow that are celebrities.',
+              'Great specifically for celebrity posts — you do NOT copy those out ahead of time. The real answer is a mix (hybrid): fan-out-on-write for normal users, and fan-out-on-read for any celebrities they follow.',
             affects: ['cache', 'db'],
           },
           {
             id: 'hybrid',
             label: 'Hybrid',
-            summary: 'Write-fan-out for normal accounts; read-pull for celebrities; merge.',
+            summary: 'Copy posts ahead of time for normal accounts; pull celebrity posts in at read time; combine the two.',
             whatBreaks:
-              'Nothing functionally — this is what large systems actually do. The cost is complexity: you maintain two code paths and a follower-count threshold on the *author* (a celebrity\'s posts skip write-fan-out and are pulled at read time, then merged into each viewer\'s feed).',
+              'Nothing about how it works — this is what big systems actually do. The cost is complexity: you keep two paths and set a follower-count cutoff based on the *poster* (a celebrity\'s posts skip the copy-ahead step and are instead pulled in when a feed is read, then combined into each viewer\'s feed).',
             tradeoffs:
-              'Best of both: fast reads for most, no write explosion for celebrities. You pay in implementation complexity and a tunable follower threshold.',
+              'Best of both: fast reads for most people, and no flood of copies for celebrities. You pay for it with more complex code and a follower cutoff you have to tune.',
             why:
-              'The production answer. Knowing *why* neither pure strategy works — and that the celebrity hot key forces the hybrid — is exactly the insight interviewers probe for.',
+              'The real-world answer. Knowing *why* neither pure approach works on its own — and that the celebrity hot key is what forces the mix — is exactly what interviewers are looking for.',
             affects: ['cache', 'queue', 'db'],
           },
         ],
@@ -163,60 +163,60 @@ export const socialMedia: Domain = {
       id: 'uploadSvc',
       label: 'Post / Upload Service',
       category: 'compute',
-      role: 'Handles new posts: stores the media blob in object storage, persists the post record, and enqueues the fan-out job. The write path, kept separate from the read path.',
+      role: 'Handles new posts: saves the photo or video in object storage, saves the post details, and queues up the job to copy the post into followers\' feeds. This is the posting path, kept separate from the reading path.',
       position: { x: 900, y: 440 },
     },
     {
       id: 'search',
       label: 'Search Service',
       category: 'compute',
-      role: 'User / hashtag search via an inverted index, kept off the primary store so heavy search queries do not slow down posting or feeds.',
+      role: 'Searches for users and hashtags using a search index (a lookup table from words to the posts that contain them). It is kept separate from the main database so that heavy searches do not slow down posting or feeds.',
       position: { x: 900, y: 620 },
     },
     {
       id: 'cache',
       label: 'Feed Cache (Redis)',
       category: 'cache',
-      role: 'Stores precomputed feeds and hot objects for very fast reads (sub-ms server-side; single-digit-ms over the network) — the layer that makes fan-out-on-write pay off.',
+      role: 'A cache: fast, temporary storage that keeps ready-made feeds and popular items in memory for very fast reads (under a millisecond on the server; a few milliseconds once you add network time). This is the layer that makes copying posts ahead of time worth it.',
       position: { x: 1140, y: 80 },
       decision: {
-        question: 'What backs the hot read path?',
+        question: 'What powers the fast read path?',
         options: [
           {
             id: 'redis',
             label: 'Redis',
             isDefault: true,
-            summary: 'In-memory lists/sorted-sets for feeds; rich data structures.',
+            summary: 'Keeps feeds in memory using built-in list and ranked-list types that fit feeds well.',
             whatBreaks:
-              'Nothing — Redis sorted sets are ideal for time-ordered feeds. On a cache miss you fall back to the DB and repopulate.',
+              'Nothing — Redis\'s ranked lists (sorted sets) are ideal for feeds ordered by time. If something is not in the cache, you fetch it from the database and put it back in the cache.',
             tradeoffs:
-              'Sub-ms server-side reads (single-digit-ms over the network), native data structures (a list with LPUSH/LTRIM for a simple chronological feed window, or a sorted set when you need score-based ranking or dedup), optional persistence. Costs RAM and adds a system to operate.',
+              'Reads under a millisecond on the server (a few milliseconds with network time), built-in data types (a plain list you can add to the front and trim for a simple newest-first feed, or a ranked list when you want to order by a score or drop duplicates), and optional saving to disk. Costs memory and adds another system to run.',
             why:
-              'Feeds are lists with trimming and ranking — Redis data structures map onto that perfectly, which Memcached cannot do.',
+              'Feeds are lists you trim and rank — Redis\'s built-in types fit that exactly, which Memcached cannot do.',
             affects: ['db'],
           },
           {
             id: 'memcached',
             label: 'Memcached',
-            summary: 'Simple key/value blob cache, multithreaded.',
+            summary: 'A simple cache that stores a value under a key, and uses multiple threads.',
             whatBreaks:
-              'You lose native list/sorted-set ops, so you must serialize the whole feed blob and rewrite it on every change — wasteful for incremental feed updates.',
+              'You lose the built-in list and ranked-list types, so you have to store the whole feed as one lump and rewrite all of it on every change — wasteful when you just want to add one post.',
             tradeoffs:
-              'Dead-simple and very fast for plain key→blob. But no rich structures and no persistence, so it is a worse fit for feed semantics.',
+              'Very simple and very fast for plain key-to-value lookups. But no rich data types and no saving to disk, so it fits feeds worse.',
             why:
-              'Fine as a pure object cache (cache a rendered post by id). For the feed list itself, Redis structures win.',
+              'Fine as a plain object cache (for example, cache a finished post by its id). But for the feed list itself, Redis\'s data types win.',
             affects: ['db'],
           },
           {
             id: 'no-cache',
             label: 'No cache',
-            summary: 'Read feeds straight from the database every time.',
+            summary: 'Read every feed straight from the database each time.',
             whatBreaks:
-              'Your read-heavy workload hammers the DB directly; it cannot keep up and read latency balloons. The entire fan-out-on-write strategy loses its point without a cache to hold the precomputed feeds.',
+              'With so many reads, the database gets hit directly and cannot keep up, so feeds get slow. And copying posts ahead of time is pointless if there is no cache to hold those ready-made feeds.',
             tradeoffs:
-              'One fewer system. But it throws away the whole reason the architecture is shaped the way it is.',
+              'One fewer system to run. But it throws away the whole reason the design is built the way it is.',
             why:
-              'Never, at this scale. Included to show the cache is structural, not optional.',
+              'Never do this at this scale. Included to show the cache is essential, not optional.',
             affects: ['db'],
           },
         ],
@@ -226,46 +226,46 @@ export const socialMedia: Domain = {
       id: 'db',
       label: 'Posts DB (Cassandra)',
       category: 'datastore',
-      role: 'Durable store of posts, follows, and the social graph — the source of truth behind the cache.',
+      role: 'The permanent store for posts, follows, and who-follows-whom (the social graph) — the trusted source of truth behind the cache.',
       position: { x: 1140, y: 300 },
       decision: {
-        question: 'What stores the posts and the social graph?',
+        question: 'What stores the posts and the who-follows-whom data?',
         options: [
           {
             id: 'cassandra',
             label: 'Cassandra (wide-column)',
             isDefault: true,
-            summary: 'Partition by user; append posts; tunable consistency.',
+            summary: 'A wide-column database: group each user\'s data together, keep adding new posts, and choose how strict the consistency is.',
             whatBreaks:
-              'Mostly nothing — writes scale horizontally and partitioning by user_id keeps a user\'s posts together. The catch: a celebrity\'s posts all land in one partition, creating a hot/unbounded partition (exactly what Cassandra handles poorly), so high-volume authors need a bucketed key like (user_id, month). You also give up joins and ad-hoc queries.',
+              'Mostly nothing — you can add more machines to handle more writes, and grouping data by user_id keeps a user\'s posts together in one group (a partition). The catch: a celebrity\'s posts all pile into one group that grows without limit and gets hammered (a "hot partition"), which is exactly what Cassandra handles poorly. So heavy posters need a key that splits the group up, like (user_id, month). You also give up joins and one-off ad-hoc queries.',
             tradeoffs:
-              'Massive write throughput and linear horizontal scaling. But no joins, eventual consistency by default, and you must design tables around your queries up front.',
+              'Handles a huge number of writes, and you scale by simply adding more machines. But no joins, data is eventually consistent by default (it takes a moment to catch up), and you have to design your tables around your queries up front.',
             why:
-              'Social feeds are append-heavy, partition cleanly by user, and tolerate eventual consistency (a like count can lag a second). That is Cassandra\'s sweet spot.',
+              'Social feeds mostly add new posts, split neatly by user, and can tolerate data taking a moment to catch up (a like count can lag a second). That is exactly what Cassandra is good at.',
             affects: ['cache'],
           },
           {
             id: 'postgres',
             label: 'PostgreSQL',
-            summary: 'Relational; joins for graph queries; strong consistency.',
+            summary: 'A relational database: tables you can join together, with data that is always in sync.',
             whatBreaks:
-              'A single primary becomes the write bottleneck at social scale; you are forced into sharding and read replicas, at which point you lose the easy joins you adopted it for.',
+              'One main database can only handle so many writes, and at social scale it maxes out. You are then forced to split the data across many machines (sharding) and add read-only copies — and at that point you lose the easy joins you picked it for.',
             tradeoffs:
-              'Rich queries, transactions, and strong consistency out of the box. But horizontal write scaling is painful and manual.',
+              'Powerful queries, transactions, and always-in-sync data out of the box. But growing write capacity means splitting it across machines by hand, which is painful.',
             why:
-              'Perfect early on and for the relational parts (accounts, payments). Instagram famously scaled on sharded PostgreSQL; many systems start here and split the high-volume feed data out to a wide-column store later.',
+              'Perfect early on and for the parts that need relationships (accounts, payments). Instagram famously grew on sharded PostgreSQL; many systems start here and later move the high-volume feed data out to a wide-column database.',
             affects: ['cache'],
           },
           {
             id: 'mysql-shard',
             label: 'Sharded MySQL',
-            summary: 'Manually shard by user id across many MySQL instances.',
+            summary: 'Split the data by user id across many MySQL machines yourself.',
             whatBreaks:
-              'Cross-shard queries and resharding become operational pain; the social graph (which spans users) is awkward to query when users live on different shards.',
+              'Queries that span machines, and re-splitting the data as you grow, become a real headache. The who-follows-whom data (which links users to each other) is awkward to query when those users sit on different machines.',
             tradeoffs:
-              'Proven at huge scale (early Facebook ran heavily sharded MySQL behind a memcached tier). But sharding logic, rebalancing, and cross-shard joins are all on you.',
+              'Proven at huge scale (early Facebook ran heavily split MySQL with a memcached cache in front). But the splitting logic, rebalancing, and cross-machine queries are all your job.',
             why:
-              'A battle-tested path when you have deep MySQL expertise. The reason newer designs reach for Cassandra is to get that horizontal scaling without hand-rolling sharding.',
+              'A well-tested path when you have deep MySQL know-how. The reason newer designs reach for Cassandra is to get that scale-by-adding-machines without building the splitting yourself.',
             affects: ['cache'],
           },
         ],
@@ -275,21 +275,21 @@ export const socialMedia: Domain = {
       id: 'queue',
       label: 'Fan-out Workers',
       category: 'queue',
-      role: 'Async workers that push each new post into followers\' feed caches — the write-amplification step that fan-out-on-write trades into.',
+      role: 'Background workers that copy each new post into followers\' ready-made feeds — this is the extra work (all those copies) that fan-out-on-write takes on.',
       position: { x: 1140, y: 520 },
     },
     {
       id: 'objectStore',
       label: 'Object Storage (S3)',
       category: 'datastore',
-      role: 'Durable blob store for the actual photos/videos. It is the CDN\'s origin; the app only ever stores and returns URLs to it.',
+      role: 'The permanent home for the actual photos and videos. It holds the original copies that the CDN pulls from; the app only ever saves files here and hands back links to them.',
       position: { x: 1360, y: 460 },
     },
     {
       id: 'monitoring',
       label: 'Observability',
       category: 'compute',
-      role: 'Metrics, logs, and traces across services — how you catch a fan-out backlog or a cache hit-rate drop before the feed gets slow.',
+      role: 'Collects measurements, logs, and request traces across all the services — how you spot a backlog of feed-copy work or a drop in how often the cache is hitting, before the feed starts feeling slow.',
       position: { x: 1360, y: 120 },
     },
   ],
