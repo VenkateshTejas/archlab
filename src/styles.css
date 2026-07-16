@@ -376,6 +376,27 @@ body {
 .legend__dot--queue { background: var(--c-queue); }
 .legend__dot--external { background: var(--c-external); }
 
+/* ───────────── panel collapse rail ───────────── */
+.panel-toggle {
+  flex-shrink: 0;
+  width: 22px;
+  background: var(--panel);
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.panel-toggle:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
 /* ───────────── inspector ───────────── */
 .inspector {
   width: 400px;

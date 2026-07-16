@@ -43,6 +43,7 @@ export function App() {
   const [quizMode, setQuizMode] = useState(false)
   const [showPatterns, setShowPatterns] = useState(false)
   const [showLanding, setShowLanding] = useState(true)
+  const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [choicesByDomain, setChoicesByDomain] = useState<Record<string, Choices>>(() =>
     Object.fromEntries(domains.map((d) => [d.id, defaultChoices(d)])),
   )
@@ -142,11 +143,13 @@ export function App() {
   function selectNode(id: string | null) {
     setSelectedNodeId(id)
     setSelectedCategory(null)
+    if (id) setPanelCollapsed(false) // reopen the pane when a component is clicked
   }
 
   function selectCategory(cat: NodeCategory) {
     setSelectedCategory((cur) => (cur === cat ? null : cat))
     setSelectedNodeId(null)
+    setPanelCollapsed(false)
   }
 
   function switchDomain(id: string) {
@@ -274,28 +277,38 @@ export function App() {
           >
             <Background gap={20} />
             <Controls showInteractive={false} />
-            <FitView dep={activeDomainId} />
+            <FitView dep={`${activeDomainId}-${panelCollapsed}`} />
           </ReactFlow>
           <Legend active={selectedCategory} onSelect={selectCategory} />
         </div>
 
-        {selectedNode ? (
-          <InspectorPanel
-            node={selectedNode}
-            activeOptionId={choices[selectedNode.id]}
-            quizMode={quizMode}
-            onSelectOption={selectOption}
-            onClose={() => selectNode(null)}
-          />
-        ) : selectedCategory ? (
-          <CategoryInfo
-            category={selectedCategory}
-            domain={domain}
-            onClose={() => setSelectedCategory(null)}
-          />
-        ) : (
-          <DomainBrief domain={domain} />
-        )}
+        <button
+          className="panel-toggle"
+          onClick={() => setPanelCollapsed((c) => !c)}
+          title={panelCollapsed ? 'Show details panel' : 'Collapse details panel'}
+          aria-label={panelCollapsed ? 'Show details panel' : 'Collapse details panel'}
+        >
+          {panelCollapsed ? '‹' : '›'}
+        </button>
+
+        {!panelCollapsed &&
+          (selectedNode ? (
+            <InspectorPanel
+              node={selectedNode}
+              activeOptionId={choices[selectedNode.id]}
+              quizMode={quizMode}
+              onSelectOption={selectOption}
+              onClose={() => selectNode(null)}
+            />
+          ) : selectedCategory ? (
+            <CategoryInfo
+              category={selectedCategory}
+              domain={domain}
+              onClose={() => setSelectedCategory(null)}
+            />
+          ) : (
+            <DomainBrief domain={domain} />
+          ))}
       </div>
         </>
       )}
