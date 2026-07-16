@@ -99,8 +99,14 @@ export function InspectorPanel({
               <Section title="Tradeoffs" tone="trade" body={activeOption.tradeoffs} />
               <Section title="Why you'd choose this" tone="why" body={activeOption.why} />
               {activeOption.affects.length > 0 && (
-                <p className="consequence__cascade">
-                  Highlighted components downstream are the ones this choice affects.
+                <p
+                  className={`consequence__cascade ${
+                    activeOption.isDefault ? '' : 'consequence__cascade--impact'
+                  }`}
+                >
+                  {activeOption.isDefault
+                    ? 'Highlighted components on the canvas are what this reference choice touches.'
+                    : '⚠ The components pulsing red on the canvas are what this change impacts — that\'s the "what breaks" above, shown on the diagram.'}
                 </p>
               )}
             </div>

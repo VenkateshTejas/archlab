@@ -64,11 +64,25 @@ export function App() {
     return new Set(opt?.affects ?? [])
   }, [selectedNode, choices])
 
+  // Is the selected node's current choice a deviation from the reference design?
+  // If so, the cascade renders as *impact* (red + ⚠) rather than a neutral highlight —
+  // this is how "what breaks" shows up on the diagram, not just in the panel.
+  const impactMode = useMemo(() => {
+    if (!selectedNode?.decision) return false
+    const def =
+      selectedNode.decision.options.find((o) => o.isDefault) ?? selectedNode.decision.options[0]
+    return choices[selectedNode.id] !== def.id
+  }, [selectedNode, choices])
+
   const rfNodes: Node<ComponentNodeData>[] = useMemo(
     () =>
       domain.nodes.map((n) => {
         const activeId = choices[n.id]
         const activeLabel = n.decision?.options.find((o) => o.id === activeId)?.label
+        const def = n.decision
+          ? n.decision.options.find((o) => o.isDefault) ?? n.decision.options[0]
+          : null
+        const affected = highlightedIds.has(n.id)
         return {
           id: n.id,
           type: 'component',
@@ -78,13 +92,16 @@ export function App() {
             category: n.category,
             activeLabel,
             hasDecision: !!n.decision,
-            isHighlighted: highlightedIds.has(n.id),
+            isHighlighted: affected && !impactMode,
+            isImpacted: affected && impactMode,
+            // Persistent marker: this component's choice deviates from the reference design.
+            isChanged: !!def && activeId !== def.id,
             isCategoryMatch: selectedCategory != null && n.category === selectedCategory,
             isDimmed: selectedCategory != null && n.category !== selectedCategory,
           },
         }
       }),
-    [domain, choices, highlightedIds, positions, selectedCategory],
+    [domain, choices, highlightedIds, impactMode, positions, selectedCategory],
   )
 
   const rfEdges: Edge[] = useMemo(
@@ -93,7 +110,9 @@ export function App() {
         const inCascade =
           selectedNodeId === e.source && highlightedIds.has(e.target)
         const className = inCascade
-          ? 'edge--cascade'
+          ? impactMode
+            ? 'edge--impact'
+            : 'edge--cascade'
           : e.control
             ? 'edge--control'
             : e.async
@@ -110,7 +129,7 @@ export function App() {
           className,
         }
       }),
-    [domain, selectedNodeId, highlightedIds],
+    [domain, selectedNodeId, highlightedIds, impactMode],
   )
 
   function selectOption(nodeId: string, optionId: string) {

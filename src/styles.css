@@ -253,6 +253,37 @@ body {
 .node--dimmed {
   opacity: 0.28;
 }
+/* a non-reference choice broke/impacted this component */
+.node--impacted {
+  border-color: #f0506e;
+  box-shadow: 0 0 0 2px #f0506e, 0 0 22px rgba(240, 80, 110, 0.45);
+  animation: pulse-red 1.3s ease-in-out infinite;
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 2px #f0506e, 0 0 14px rgba(240, 80, 110, 0.35); }
+  50% { box-shadow: 0 0 0 2px #f0506e, 0 0 28px rgba(240, 80, 110, 0.65); }
+}
+
+/* floating status pill above a node */
+.node__flag {
+  position: absolute;
+  top: -11px;
+  left: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.node__flag--impact {
+  background: #f0506e;
+  color: #0d1117;
+}
+.node__flag--changed {
+  background: rgba(224, 165, 42, 0.9);
+  color: #0d1117;
+}
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 2px #f0b429, 0 0 14px rgba(240, 180, 41, 0.3); }
   50% { box-shadow: 0 0 0 2px #f0b429, 0 0 26px rgba(240, 180, 41, 0.6); }
@@ -269,6 +300,11 @@ body {
 }
 .react-flow__edge.edge--async .react-flow__edge-path {
   stroke-dasharray: 6 4;
+}
+/* impact cascade — a non-reference choice ripples down these edges */
+.react-flow__edge.edge--impact .react-flow__edge-path {
+  stroke: #f0506e !important;
+  stroke-width: 2.5 !important;
 }
 /* control-plane / resolution edge (DNS) — not a request hop */
 .react-flow__edge.edge--control .react-flow__edge-path {
@@ -512,6 +548,9 @@ body {
   color: #f0b429;
   font-style: italic;
   margin: 2px 0 0;
+}
+.consequence__cascade--impact {
+  color: #f0506e;
 }
 
 /* ───────────── domain brief (default panel) ───────────── */

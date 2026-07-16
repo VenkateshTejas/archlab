@@ -8,6 +8,8 @@ export interface ComponentNodeData {
   activeLabel?: string
   hasDecision: boolean
   isHighlighted: boolean
+  isImpacted?: boolean
+  isChanged?: boolean
   isCategoryMatch?: boolean
   isDimmed?: boolean
   [key: string]: unknown
@@ -40,7 +42,7 @@ export function ComponentNode({
     'node',
     `node--${data.category}`,
     selected ? 'node--selected' : '',
-    data.isHighlighted ? 'node--highlighted' : '',
+    data.isImpacted ? 'node--impacted' : data.isHighlighted ? 'node--highlighted' : '',
     data.isCategoryMatch ? 'node--cat-match' : '',
     data.isDimmed ? 'node--dimmed' : '',
   ]
@@ -50,11 +52,13 @@ export function ComponentNode({
   return (
     <div className={classes}>
       <Handle type="target" position={Position.Left} />
+      {data.isImpacted && <div className="node__flag node__flag--impact">⚠ impacted</div>}
+      {data.isChanged && !data.isImpacted && (
+        <div className="node__flag node__flag--changed">● changed</div>
+      )}
       <div className="node__category">{CATEGORY_LABEL[data.category]}</div>
       <div className="node__title">{title}</div>
-      {data.hasDecision && (
-        <div className="node__chip">{data.activeLabel}</div>
-      )}
+      {data.hasDecision && <div className="node__chip">{data.activeLabel}</div>}
       {data.hasDecision && <div className="node__swap">⇆ swap</div>}
       <Handle type="source" position={Position.Right} />
     </div>
