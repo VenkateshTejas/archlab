@@ -1226,7 +1226,7 @@ body {
   .patterns__intro h1 { font-size: 20px; }
 
   /* components 101: list becomes a horizontal chip strip above the detail */
-  .components { flex-direction: column; }
+  .components { flex-direction: column; position: relative; }
   .components__list {
     width: 100%;
     display: flex;
@@ -1236,7 +1236,35 @@ body {
     overflow-y: hidden;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 10px;
+    padding: 10px 10px 12px;
+    /* always-visible scrollbar so it's obvious the strip scrolls sideways */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) var(--panel-2);
+  }
+  .components__list::-webkit-scrollbar {
+    height: 6px;
+    -webkit-appearance: none;
+  }
+  .components__list::-webkit-scrollbar-track {
+    background: var(--panel-2);
+    border-radius: 3px;
+  }
+  .components__list::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  /* fade at the right edge = a persistent "more this way →" cue (works on iOS,
+     which never shows a scrollbar) */
+  .components::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 60px;
+    background: linear-gradient(to right, rgba(22, 27, 34, 0), var(--panel));
+    pointer-events: none;
+    z-index: 4;
   }
   .components__intro { display: none; }
   .comp-item { flex-shrink: 0; width: auto; white-space: nowrap; padding: 7px 12px; }
