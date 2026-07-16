@@ -1074,6 +1074,10 @@ body {
   display: flex;
   min-height: 0;
 }
+/* animated swipe cue — only shown on the mobile horizontal strip */
+.components__swipe {
+  display: none;
+}
 .components__list {
   width: 260px;
   flex-shrink: 0;
@@ -1236,35 +1240,54 @@ body {
     overflow-y: hidden;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    padding: 10px 10px 12px;
-    /* always-visible scrollbar so it's obvious the strip scrolls sideways */
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent) var(--panel-2);
+    padding: 10px;
+    /* hide the scrollbar itself — the animated chevron is the cue instead */
+    scrollbar-width: none;
   }
   .components__list::-webkit-scrollbar {
-    height: 6px;
-    -webkit-appearance: none;
+    display: none;
   }
-  .components__list::-webkit-scrollbar-track {
-    background: var(--panel-2);
-    border-radius: 3px;
-  }
-  .components__list::-webkit-scrollbar-thumb {
-    background: var(--accent);
-    border-radius: 3px;
-  }
-  /* fade at the right edge = a persistent "more this way →" cue (works on iOS,
-     which never shows a scrollbar) */
+  /* soft fade at the right edge, under the animated chevron */
   .components::after {
     content: '';
     position: absolute;
     top: 0;
     right: 0;
-    width: 40px;
-    height: 60px;
+    width: 46px;
+    height: 56px;
     background: linear-gradient(to right, rgba(22, 27, 34, 0), var(--panel));
     pointer-events: none;
     z-index: 4;
+    transition: opacity 0.3s ease;
+  }
+  /* animated "swipe →" chevron; fades away once the user scrolls the strip */
+  .components__swipe {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 6px;
+    right: 4px;
+    width: 30px;
+    height: 40px;
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .components__swipe-chevron {
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    animation: swipe-nudge 1.5s ease-in-out infinite;
+  }
+  .components--scrolled .components__swipe,
+  .components--scrolled::after {
+    opacity: 0;
+  }
+  @keyframes swipe-nudge {
+    0%, 100% { transform: translateX(-4px); opacity: 0.3; }
+    50% { transform: translateX(5px); opacity: 1; }
   }
   .components__intro { display: none; }
   .comp-item { flex-shrink: 0; width: auto; white-space: nowrap; padding: 7px 12px; }

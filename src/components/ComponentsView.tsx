@@ -6,11 +6,19 @@ import { CATEGORY_META } from './CategoryInfo'
 // the right pane is that component's page (~100-word explainer + common types).
 export function ComponentsView() {
   const [id, setId] = useState(componentDocs[0].id)
+  // On phones the list is a horizontal strip; show an animated "swipe" cue
+  // until the user actually scrolls it.
+  const [scrolled, setScrolled] = useState(false)
   const doc = componentDocs.find((c) => c.id === id) ?? componentDocs[0]
 
   return (
-    <div className="components">
-      <aside className="components__list">
+    <div className={`components ${scrolled ? 'components--scrolled' : ''}`}>
+      <aside
+        className="components__list"
+        onScroll={(e) => {
+          if (!scrolled && e.currentTarget.scrollLeft > 4) setScrolled(true)
+        }}
+      >
         <div className="components__intro">
           <strong>Building blocks</strong>
           <span>Learn each piece before the full architectures.</span>
@@ -26,6 +34,11 @@ export function ComponentsView() {
           </button>
         ))}
       </aside>
+
+      {/* animated scroll hint (mobile only, CSS-gated) */}
+      <div className="components__swipe" aria-hidden="true">
+        <span className="components__swipe-chevron">›</span>
+      </div>
 
       <section className="components__detail" key={doc.id}>
         <div className="comp-detail__cat">
