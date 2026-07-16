@@ -215,6 +215,9 @@ export function App() {
     (n) => n.decision && choices[n.id] !== (n.decision.options.find((o) => o.isDefault) ?? n.decision.options[0]).id,
   )
 
+  // The architecture dropdown + swap controls only belong to the canvas view.
+  const inDomainView = !showComponents && !showPatterns
+
   if (showLanding) {
     return (
       <Landing
@@ -237,45 +240,51 @@ export function App() {
           <span className="brand__tag">swap a component, see what breaks</span>
         </button>
         <nav className="domains">
-          <label className="domain-select">
-            <span className="domain-select__caption">Architecture</span>
-            <select
-              className="domain-select__input"
-              value={activeDomainId}
-              onChange={(e) => switchDomain(e.target.value)}
-            >
-              {domains.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {inDomainView && (
+            <label className="domain-select">
+              <span className="domain-select__caption">Architecture</span>
+              <select
+                className="domain-select__input"
+                value={activeDomainId}
+                onChange={(e) => switchDomain(e.target.value)}
+              >
+                {domains.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <button
             className={`domain-tab domain-tab--patterns ${showComponents ? 'domain-tab--active' : ''}`}
-            onClick={() => pushNav({ components: true })}
+            onClick={() => pushNav(showComponents ? {} : { components: true })}
+            title={showComponents ? 'Back to the architecture' : 'Learn the building blocks'}
           >
             Components
           </button>
           <button
             className={`domain-tab domain-tab--patterns ${showPatterns ? 'domain-tab--active' : ''}`}
-            onClick={() => pushNav({ patterns: true })}
+            onClick={() => pushNav(showPatterns ? {} : { patterns: true })}
+            title={showPatterns ? 'Back to the architecture' : 'See the recurring patterns'}
           >
             Patterns
           </button>
         </nav>
-        <div className="actions">
-          <button
-            className={`action ${quizMode ? 'action--on' : ''}`}
-            onClick={() => setQuizMode((q) => !q)}
-            title="Hide the answers and predict what breaks before revealing"
-          >
-            {quizMode ? '◉ Quiz mode on' : '○ Quiz mode'}
-          </button>
-          <button className="action" onClick={resetDomain} disabled={!isModified}>
-            ↺ Reset swaps
-          </button>
-        </div>
+        {inDomainView && (
+          <div className="actions">
+            <button
+              className={`action ${quizMode ? 'action--on' : ''}`}
+              onClick={() => setQuizMode((q) => !q)}
+              title="Hide the answers and predict what breaks before revealing"
+            >
+              {quizMode ? '◉ Quiz mode on' : '○ Quiz mode'}
+            </button>
+            <button className="action" onClick={resetDomain} disabled={!isModified}>
+              ↺ Reset swaps
+            </button>
+          </div>
+        )}
       </header>
 
       {showComponents ? (
