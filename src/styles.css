@@ -758,15 +758,113 @@ body {
   max-width: 1400px;
   margin: 0 auto;
 }
+/* coverage matrix */
+.pmatrix {
+  max-width: 760px;
+  margin: 0 auto 34px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.pmatrix__row {
+  display: grid;
+  grid-template-columns: 1.7fr repeat(4, 1fr);
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+}
+.pmatrix__row:last-child {
+  border-bottom: none;
+}
+.pmatrix__row--head {
+  background: var(--panel-2);
+}
+.pmatrix__pcell {
+  padding: 11px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+.pmatrix__row--head .pmatrix__pcell {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.pmatrix__dhead {
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  align-self: center;
+}
+.pmatrix__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+}
+button.pmatrix__cell {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+button.pmatrix__cell:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.pmatrix__cell--empty::after {
+  content: '·';
+  color: var(--border);
+  font-size: 16px;
+}
+.pmatrix__dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  transition: transform 0.12s;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+button.pmatrix__cell:hover .pmatrix__dot {
+  transform: scale(1.4);
+}
+
 .pattern {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 18px;
 }
+.pattern__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 6px;
+}
+.pattern__count {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #c7a8ff;
+  background: rgba(163, 113, 247, 0.16);
+  border: 1px solid rgba(163, 113, 247, 0.3);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
 .pattern__name {
   font-size: 16px;
-  margin: 0 0 6px;
+  margin: 0;
   color: var(--text);
 }
 .pattern__essence {
