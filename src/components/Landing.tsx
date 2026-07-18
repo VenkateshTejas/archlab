@@ -36,14 +36,14 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
             fact-checked, not guessed by an AI.
           </p>
           <div className="landing__cta">
-            <button className="landing__btn landing__btn--primary" onClick={() => onEnter()}>
-              Start exploring →
-            </button>
             <button className="landing__btn" onClick={onComponents}>
               Learn the components first
             </button>
             <button className="landing__btn" onClick={onPatterns}>
               See the patterns
+            </button>
+            <button className="landing__btn landing__btn--primary" onClick={() => onEnter()}>
+              Start exploring →
             </button>
           </div>
         </header>
