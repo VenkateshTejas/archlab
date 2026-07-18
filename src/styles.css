@@ -769,7 +769,9 @@ body {
 }
 .pmatrix__row {
   display: grid;
-  grid-template-columns: 1.7fr repeat(4, 1fr);
+  /* minmax(0, …) so every row sizes columns identically regardless of the
+     text width in the header — otherwise the columns drift out of alignment */
+  grid-template-columns: minmax(0, 1.7fr) repeat(4, minmax(0, 1fr));
   align-items: stretch;
   border-bottom: 1px solid var(--border);
 }
@@ -812,7 +814,6 @@ body {
   min-height: 44px;
   background: none;
   border: none;
-  border-left: 1px solid var(--border);
 }
 button.pmatrix__cell {
   cursor: pointer;
@@ -822,9 +823,11 @@ button.pmatrix__cell:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 .pmatrix__cell--empty::after {
-  content: '·';
-  color: var(--border);
-  font-size: 16px;
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
 }
 .pmatrix__dot {
   width: 13px;

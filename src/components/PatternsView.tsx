@@ -3,11 +3,11 @@ import { domains } from '../data'
 
 // Short label + accent per domain (accent matches the landing cards) so the
 // same pattern shows visibly spanning several colored domains.
-const DOMAIN_META: Record<string, { short: string; accent: string }> = {
-  ticketing: { short: 'Ticketing', accent: '#e0a52a' },
-  social: { short: 'Social', accent: '#22c3d6' },
-  ecommerce: { short: 'E-commerce', accent: '#3fb950' },
-  betting: { short: 'Betting', accent: '#b07cff' },
+const DOMAIN_META: Record<string, { short: string; col: string; accent: string }> = {
+  ticketing: { short: 'Ticketing', col: 'Ticketing', accent: '#e0a52a' },
+  social: { short: 'Social', col: 'Social', accent: '#22c3d6' },
+  ecommerce: { short: 'E-commerce', col: 'E-comm', accent: '#3fb950' },
+  betting: { short: 'Betting', col: 'Betting', accent: '#b07cff' },
 }
 
 // The meta-lesson, made visual: a coverage map (which pattern appears in which
@@ -34,7 +34,7 @@ export function PatternsView({
           <div className="pmatrix__pcell">Pattern</div>
           {domains.map((d) => (
             <div key={d.id} className="pmatrix__dhead" style={{ color: DOMAIN_META[d.id]?.accent }}>
-              {DOMAIN_META[d.id]?.short ?? d.name}
+              {DOMAIN_META[d.id]?.col ?? d.name}
             </div>
           ))}
         </div>
