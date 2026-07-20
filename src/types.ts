@@ -84,6 +84,13 @@ export interface Domain {
   /** Who does this best in the real world — the reference design. */
   referenceNote: string
   tagline: string
+  /**
+   * Auto-layout direction. 'LR' (default) is a wide left-to-right request flow;
+   * 'TB' lays the graph out top-to-bottom, which reads far better on a phone.
+   */
+  layout?: 'LR' | 'TB'
+  /** Optional spotlight label on the landing card (e.g. "Mobile friendly"). */
+  badge?: string
   /** Step 1 of the interview: scope the problem. */
   requirements: {
     functional: string[]

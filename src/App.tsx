@@ -8,6 +8,7 @@ import {
   useReactFlow,
   type Node,
   type Edge,
+  type FitViewOptions,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 
@@ -58,7 +59,17 @@ export function App() {
   const selectedNode = domain.nodes.find((n) => n.id === selectedNodeId) ?? null
 
   // Auto-layout: dagre ranks nodes by request flow and minimizes edge crossings.
-  const positions = useMemo(() => layoutDomain(domain.nodes, domain.edges), [domain])
+  // A domain may opt into a top-to-bottom layout (reads better on a phone).
+  const positions = useMemo(
+    () => layoutDomain(domain.nodes, domain.edges, domain.layout),
+    [domain],
+  )
+  // Tall TB graphs reserve extra room at the bottom (per-side px padding) so the
+  // last rank floats clear of the legend, which is pinned to the canvas bottom.
+  const fitPadding: FitViewOptions['padding'] =
+    domain.layout === 'TB'
+      ? { top: '20px', right: '24px', bottom: '104px', left: '24px' }
+      : 0.18
 
   // The consequence cascade: nodes the selected node's *current* choice affects.
   const highlightedIds = useMemo(() => {
@@ -308,14 +319,14 @@ export function App() {
             }}
             nodesDraggable={false}
             fitView
-            fitViewOptions={{ padding: 0.18 }}
+            fitViewOptions={{ padding: fitPadding }}
             minZoom={0.15}
             maxZoom={1.5}
             proOptions={{ hideAttribution: true }}
           >
             <Background gap={20} />
             <Controls showInteractive={false} position="top-right" />
-            <FitView dep={`${activeDomainId}-${panelCollapsed}`} />
+            <FitView dep={`${activeDomainId}-${panelCollapsed}`} padding={fitPadding} />
           </ReactFlow>
           <Legend active={selectedCategory} onSelect={selectCategory} />
         </div>
@@ -357,18 +368,24 @@ export function App() {
 // Re-fits the view once React Flow has measured the custom nodes (and whenever
 // the domain changes). Without this, fitView runs before nodes have real
 // dimensions and the wide graph gets clipped on the left.
-function FitView({ dep }: { dep: string }) {
+function FitView({
+  dep,
+  padding = 0.18,
+}: {
+  dep: string
+  padding?: FitViewOptions['padding']
+}) {
   const initialized = useNodesInitialized()
   const { fitView } = useReactFlow()
   useEffect(() => {
-    if (initialized) fitView({ padding: 0.18, duration: 250 })
-  }, [initialized, dep, fitView])
+    if (initialized) fitView({ padding, duration: 250 })
+  }, [initialized, dep, padding, fitView])
   // Keep the whole graph in view when the window/canvas is resized.
   useEffect(() => {
-    const onResize = () => fitView({ padding: 0.18 })
+    const onResize = () => fitView({ padding })
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  }, [fitView])
+  }, [padding, fitView])
   return null
 }
 

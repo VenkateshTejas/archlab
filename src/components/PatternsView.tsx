@@ -23,6 +23,11 @@ export function PatternsView({
 }) {
   const timeless = patterns.filter((p) => !p.aiNative)
   const native = patterns.filter((p) => p.aiNative)
+  // Only show domains that actually carry a pattern instance as matrix columns,
+  // so a simple standalone domain (e.g. the URL shortener) doesn't add an empty column.
+  const matrixDomains = domains.filter((d) =>
+    patterns.some((p) => p.instances.some((i) => i.domainId === d.id)),
+  )
 
   return (
     <div className="patterns">
@@ -40,7 +45,7 @@ export function PatternsView({
       <div className="pmatrix">
         <div className="pmatrix__row pmatrix__row--head">
           <div className="pmatrix__pcell">Pattern</div>
-          {domains.map((d) => (
+          {matrixDomains.map((d) => (
             <div key={d.id} className="pmatrix__dhead" style={{ color: DOMAIN_META[d.id]?.accent }}>
               {DOMAIN_META[d.id]?.col ?? d.name}
             </div>
@@ -54,7 +59,7 @@ export function PatternsView({
           return (
             <div key={p.id} className="pmatrix__row">
               <div className="pmatrix__pcell">{p.name}</div>
-              {domains.map((d) => {
+              {matrixDomains.map((d) => {
                 const inst = byDomain.get(d.id)
                 if (!inst) return <div key={d.id} className="pmatrix__cell pmatrix__cell--empty" />
                 return (

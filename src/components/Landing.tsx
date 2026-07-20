@@ -4,6 +4,7 @@ import { domains } from '../data'
 // each card reads as one color. Social uses teal (not blue) so it doesn't blend
 // into the site's blue accent.
 const DOMAIN_ACCENT: Record<string, string> = {
+  url: '#ff7eb6', // pink — the simple, mobile-friendly showcase
   ticketing: '#e0a52a', // gold
   social: '#22c3d6', // teal
   ecommerce: '#3fb950', // green
@@ -53,10 +54,18 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
             return (
               <button
                 key={d.id}
-                className="landing-card"
+                className={`landing-card ${d.badge ? 'landing-card--spot' : ''}`}
                 style={{ borderTopColor: accent }}
                 onClick={() => onEnter(d.id)}
               >
+                {d.badge && (
+                  <div
+                    className="landing-card__badge"
+                    style={{ color: accent, borderColor: accent }}
+                  >
+                    <span className="landing-card__star">★</span> {d.badge}
+                  </div>
+                )}
                 <div className="landing-card__name" style={{ color: accent }}>
                   {d.name}
                 </div>

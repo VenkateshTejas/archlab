@@ -11,15 +11,29 @@ const NODE_H = 84
  * edge crossings — so the diagram stays clean and non-overlapping no matter how
  * many components a domain has. Returns a map of nodeId -> top-left position.
  */
-export function layoutDomain(nodes: ArchNode[], edges: ArchEdge[]): Record<string, { x: number; y: number }> {
+export function layoutDomain(
+  nodes: ArchNode[],
+  edges: ArchEdge[],
+  dir: 'LR' | 'TB' = 'LR',
+): Record<string, { x: number; y: number }> {
   const g = new dagre.graphlib.Graph()
-  g.setGraph({
-    rankdir: 'LR', // left-to-right request flow
-    nodesep: 30, // vertical gap between nodes in the same rank
-    ranksep: 95, // horizontal gap between ranks — room for edge labels
-    marginx: 20,
-    marginy: 20,
-  })
+  g.setGraph(
+    dir === 'TB'
+      ? {
+          rankdir: 'TB', // top-to-bottom — reads well on a tall phone screen
+          nodesep: 44, // horizontal gap between siblings in the same rank
+          ranksep: 58, // vertical gap between ranks (tighter; labels are short)
+          marginx: 20,
+          marginy: 20,
+        }
+      : {
+          rankdir: 'LR', // left-to-right request flow
+          nodesep: 30, // vertical gap between nodes in the same rank
+          ranksep: 95, // horizontal gap between ranks — room for edge labels
+          marginx: 20,
+          marginy: 20,
+        },
+  )
   g.setDefaultEdgeLabel(() => ({}))
 
   for (const n of nodes) g.setNode(n.id, { width: NODE_W, height: NODE_H })
