@@ -35,17 +35,41 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
             interviewers actually ask about. Hand-written and fact-checked, not AI-guessed.
           </p>
           <div className="landing__cta">
-            <button className="landing__btn landing__btn--primary" onClick={() => onEnter()}>
-              Start exploring →
-            </button>
             <button className="landing__btn" onClick={onComponents}>
-              Components 101
+              Components
+            </button>
+            <button className="landing__btn" onClick={() => onEnter()}>
+              Architectures
             </button>
             <button className="landing__btn" onClick={onPatterns}>
               Patterns
             </button>
           </div>
         </header>
+
+        <div className="landing__how">
+          <div className="how-step">
+            <span className="how-step__n">1</span>
+            <div>
+              <div className="how-step__t">Pick an architecture</div>
+              <div className="how-step__d">A real, opinionated reference design — not a blank canvas.</div>
+            </div>
+          </div>
+          <div className="how-step">
+            <span className="how-step__n">2</span>
+            <div>
+              <div className="how-step__t">Swap a decision</div>
+              <div className="how-step__d">Click a component and change its tech or strategy.</div>
+            </div>
+          </div>
+          <div className="how-step">
+            <span className="how-step__n">3</span>
+            <div>
+              <div className="how-step__t">See what breaks</div>
+              <div className="how-step__d">Read the authored consequence and watch the downstream cascade.</div>
+            </div>
+          </div>
+        </div>
 
         <div className="landing__pick">Pick an architecture to start</div>
         <div className="landing__domains">
@@ -76,30 +100,6 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
               </button>
             )
           })}
-        </div>
-
-        <div className="landing__how">
-          <div className="how-step">
-            <span className="how-step__n">1</span>
-            <div>
-              <div className="how-step__t">Pick an architecture</div>
-              <div className="how-step__d">A real, opinionated reference design — not a blank canvas.</div>
-            </div>
-          </div>
-          <div className="how-step">
-            <span className="how-step__n">2</span>
-            <div>
-              <div className="how-step__t">Swap a decision</div>
-              <div className="how-step__d">Click a component and change its tech or strategy.</div>
-            </div>
-          </div>
-          <div className="how-step">
-            <span className="how-step__n">3</span>
-            <div>
-              <div className="how-step__t">See what breaks</div>
-              <div className="how-step__d">Read the authored consequence and watch the downstream cascade.</div>
-            </div>
-          </div>
         </div>
 
         <div className="landing__features">
