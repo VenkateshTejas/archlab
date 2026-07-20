@@ -1206,28 +1206,72 @@ button.pmatrix__cell--ai:hover .pmatrix__ai {
   justify-content: center;
   flex-wrap: wrap;
 }
+/* classy glass buttons — each with its own accent + a slow shimmer that
+   twinkles independently */
 .landing__btn {
-  background: var(--panel);
+  --g: var(--accent);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+    var(--panel);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 11px 20px;
+  border-color: color-mix(in srgb, var(--g) 42%, var(--border));
+  border-radius: 12px;
+  padding: 12px 26px;
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: transform 0.2s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 6px 18px rgba(0, 0, 0, 0.28);
 }
+.landing__btn--components { --g: #22c3d6; }
+.landing__btn--arch { --g: #5b9dff; }
+.landing__btn--patterns { --g: #a371f7; }
+
+/* the glitter: a soft, blurred light band sweeping across, tinted by --g */
+.landing__btn::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  width: 42%;
+  left: -60%;
+  z-index: -1;
+  transform: skewX(-16deg);
+  filter: blur(7px);
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--g) 38%, rgba(255, 255, 255, 0.9)),
+    transparent
+  );
+  animation: btn-glitter 5.4s ease-in-out infinite;
+}
+.landing__btn--components::after { animation-delay: 0s; }
+.landing__btn--arch::after { animation-delay: 1.8s; }
+.landing__btn--patterns::after { animation-delay: 3.6s; }
+
+@keyframes btn-glitter {
+  0% { left: -60%; opacity: 0; }
+  12% { opacity: 0.6; }
+  48% { left: 118%; opacity: 0.6; }
+  60%, 100% { left: 118%; opacity: 0; }
+}
+
 .landing__btn:hover {
-  border-color: var(--accent);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: var(--g);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 22px rgba(91, 157, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--g) 45%, transparent),
+    0 12px 30px color-mix(in srgb, var(--g) 26%, transparent);
 }
-.landing__btn--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0d1117;
-}
-.landing__btn--primary:hover {
-  filter: brightness(1.08);
+@media (prefers-reduced-motion: reduce) {
+  .landing__btn::after { animation: none; opacity: 0; }
 }
 
 .landing__how {

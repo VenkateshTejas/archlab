@@ -35,13 +35,13 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
             interviewers actually ask about. Hand-written and fact-checked, not AI-guessed.
           </p>
           <div className="landing__cta">
-            <button className="landing__btn" onClick={onComponents}>
+            <button className="landing__btn landing__btn--components" onClick={onComponents}>
               Components
             </button>
-            <button className="landing__btn" onClick={() => onEnter()}>
+            <button className="landing__btn landing__btn--arch" onClick={() => onEnter()}>
               Architectures
             </button>
-            <button className="landing__btn" onClick={onPatterns}>
+            <button className="landing__btn landing__btn--patterns" onClick={onPatterns}>
               Patterns
             </button>
           </div>
