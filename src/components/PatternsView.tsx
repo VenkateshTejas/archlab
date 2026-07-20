@@ -76,13 +76,18 @@ export function PatternsView({
                   </button>
                 )
               })}
-              <a
-                href={`#pattern-${p.id}`}
+              <button
+                type="button"
                 className="pmatrix__cell pmatrix__cell--ai"
                 title={`${p.name} in AI systems`}
+                onClick={() =>
+                  document
+                    .getElementById(`pattern-${p.id}`)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
               >
                 {p.ai ? <span className="pmatrix__ai">✦</span> : null}
-              </a>
+              </button>
             </div>
           )
         })}

@@ -917,16 +917,15 @@ button.pmatrix__cell:hover {
 button.pmatrix__cell:hover .pmatrix__dot {
   transform: scale(1.4);
 }
-/* AI column: a link that scrolls to the pattern's "In AI systems" section */
+/* AI column: a button that scrolls to the pattern's "In AI systems" section */
 .pmatrix__cell--ai {
-  text-decoration: none;
   border-left: 1px solid var(--border);
 }
-a.pmatrix__cell--ai {
+button.pmatrix__cell--ai {
   cursor: pointer;
   transition: background 0.12s;
 }
-a.pmatrix__cell--ai:hover {
+button.pmatrix__cell--ai:hover {
   background: rgba(124, 196, 255, 0.1);
 }
 .pmatrix__ai {
@@ -935,7 +934,7 @@ a.pmatrix__cell--ai:hover {
   line-height: 1;
   transition: transform 0.12s;
 }
-a.pmatrix__cell--ai:hover .pmatrix__ai {
+button.pmatrix__cell--ai:hover .pmatrix__ai {
   transform: scale(1.35);
 }
 
