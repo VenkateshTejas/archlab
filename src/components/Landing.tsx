@@ -30,23 +30,44 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
             Learn system design by taking real architectures <em>apart</em>.
           </p>
           <p className="landing__sub">
-            Open a real, proven design, click any part to see why it was built that way, then{' '}
-            <strong>swap a piece and watch what breaks</strong> — in plain language, with the
-            trade-offs an interviewer actually asks about. Every explanation is hand-written and
-            fact-checked, not guessed by an AI.
+            Open a proven design, swap any piece, and watch what breaks — with the trade-offs
+            interviewers actually ask about. Hand-written and fact-checked, not AI-guessed.
           </p>
           <div className="landing__cta">
-            <button className="landing__btn" onClick={onComponents}>
-              Learn the components first
-            </button>
-            <button className="landing__btn" onClick={onPatterns}>
-              See the patterns
-            </button>
             <button className="landing__btn landing__btn--primary" onClick={() => onEnter()}>
               Start exploring →
             </button>
+            <button className="landing__btn" onClick={onComponents}>
+              Components 101
+            </button>
+            <button className="landing__btn" onClick={onPatterns}>
+              Patterns
+            </button>
           </div>
         </header>
+
+        <div className="landing__pick">Pick an architecture to start</div>
+        <div className="landing__domains">
+          {domains.map((d) => {
+            const accent = DOMAIN_ACCENT[d.id] ?? 'var(--accent)'
+            return (
+              <button
+                key={d.id}
+                className="landing-card"
+                style={{ borderTopColor: accent }}
+                onClick={() => onEnter(d.id)}
+              >
+                <div className="landing-card__name" style={{ color: accent }}>
+                  {d.name}
+                </div>
+                <div className="landing-card__tag">{d.tagline}</div>
+                <div className="landing-card__go" style={{ color: accent }}>
+                  Explore →
+                </div>
+              </button>
+            )
+          })}
+        </div>
 
         <div className="landing__how">
           <div className="how-step">
@@ -72,33 +93,10 @@ export function Landing({ onEnter, onPatterns, onComponents }: Props) {
           </div>
         </div>
 
-        <div className="landing__pick">Pick an architecture to start</div>
-        <div className="landing__domains">
-          {domains.map((d) => {
-            const accent = DOMAIN_ACCENT[d.id] ?? 'var(--accent)'
-            return (
-              <button
-                key={d.id}
-                className="landing-card"
-                style={{ borderTopColor: accent }}
-                onClick={() => onEnter(d.id)}
-              >
-                <div className="landing-card__name" style={{ color: accent }}>
-                  {d.name}
-                </div>
-                <div className="landing-card__tag">{d.tagline}</div>
-                <div className="landing-card__go" style={{ color: accent }}>
-                  Explore →
-                </div>
-              </button>
-            )
-          })}
-        </div>
-
         <div className="landing__features">
-          <span>◆ Quiz mode — predict before you reveal</span>
-          <span>◆ Requirements &amp; back-of-envelope estimation</span>
-          <span>◆ Cross-domain patterns that transfer</span>
+          <span>◆ Quiz mode</span>
+          <span>◆ Requirements &amp; estimation</span>
+          <span>◆ Cross-domain + AI patterns</span>
         </div>
       </div>
     </div>

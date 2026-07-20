@@ -65,8 +65,8 @@ body {
   color: var(--accent);
 }
 .brand__name {
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 20px;
   letter-spacing: 0.3px;
 }
 .brand__tag {
@@ -159,17 +159,6 @@ body {
 .domain-select__input:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(91, 157, 255, 0.4);
-}
-
-.domain-blurb {
-  padding: 9px 20px;
-  font-size: 13px;
-  color: var(--muted);
-  background: var(--panel-2);
-  border-bottom: 1px solid var(--border);
-}
-.domain-blurb strong {
-  color: var(--text);
 }
 
 /* ───────────── main layout ───────────── */
@@ -447,7 +436,7 @@ body {
   padding-right: 24px;
 }
 .inspector__nodename {
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 700;
 }
 .inspector__role p {
@@ -590,7 +579,8 @@ body {
   color: var(--c-queue);
 }
 .brief__title {
-  font-size: 20px;
+  font-size: 23px;
+  font-weight: 700;
   margin: 0;
 }
 .brief__tagline {
@@ -678,14 +668,101 @@ body {
   line-height: 1.6;
   color: var(--text);
 }
-.brief__cta {
+.brief__ref {
   font-size: 12px;
   color: var(--muted);
   line-height: 1.5;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.brief__sub {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 7px;
+}
+.brief__sub--nf {
+  color: var(--muted);
+  margin-top: 14px;
+}
+.brief__cta {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
 }
 .brief__cta .tag {
   color: var(--accent);
   font-weight: 600;
+}
+
+/* ───────────── collapsible accordion section ───────────── */
+.cx {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.cx__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: none;
+  border: none;
+  padding: 12px 13px;
+  cursor: pointer;
+  color: var(--text);
+  text-align: left;
+  transition: background 0.12s;
+}
+.cx__head:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.cx__title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+.cx__count {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.cx__chev {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+.cx--open .cx__chev {
+  transform: rotate(180deg);
+}
+.cx--open .cx__head {
+  border-bottom: 1px solid var(--border);
+}
+.cx__body {
+  padding: 12px 13px;
+}
+.cx--break .cx__title {
+  color: var(--c-cache);
+}
+.cx--trade .cx__title {
+  color: var(--c-edge);
+}
+.cx--why .cx__title {
+  color: var(--c-datastore);
 }
 
 /* ───────────── quiz gate ───────────── */
@@ -770,8 +847,9 @@ body {
 .pmatrix__row {
   display: grid;
   /* minmax(0, …) so every row sizes columns identically regardless of the
-     text width in the header — otherwise the columns drift out of alignment */
-  grid-template-columns: minmax(0, 1.7fr) repeat(4, minmax(0, 1fr));
+     text width in the header — otherwise the columns drift out of alignment.
+     4 domain columns + 1 AI column. */
+  grid-template-columns: minmax(0, 1.7fr) repeat(4, minmax(0, 1fr)) minmax(0, 0.7fr);
   align-items: stretch;
   border-bottom: 1px solid var(--border);
 }
@@ -839,8 +917,30 @@ button.pmatrix__cell:hover {
 button.pmatrix__cell:hover .pmatrix__dot {
   transform: scale(1.4);
 }
+/* AI column: a link that scrolls to the pattern's "In AI systems" section */
+.pmatrix__cell--ai {
+  text-decoration: none;
+  border-left: 1px solid var(--border);
+}
+a.pmatrix__cell--ai {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+a.pmatrix__cell--ai:hover {
+  background: rgba(124, 196, 255, 0.1);
+}
+.pmatrix__ai {
+  color: #7cc4ff;
+  font-size: 13px;
+  line-height: 1;
+  transition: transform 0.12s;
+}
+a.pmatrix__cell--ai:hover .pmatrix__ai {
+  transform: scale(1.35);
+}
 
 .pattern {
+  scroll-margin-top: 16px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -937,6 +1037,69 @@ button.pmatrix__cell:hover .pmatrix__dot {
   font-size: 12px;
   line-height: 1.45;
   color: var(--text);
+}
+
+/* canonical industry name(s) under the pattern title */
+.pattern__aka {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--muted);
+  margin: -2px 0 10px;
+}
+
+/* the classic → AI bridge section */
+.pattern__field--ai {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px dashed var(--border);
+}
+.pattern__label--ai {
+  color: #7cc4ff;
+}
+.pattern__bridge {
+  margin: 0 0 9px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text);
+  font-style: italic;
+}
+/* AI instances are illustrative, not clickable — flat, tinted, no hover jump */
+.instance--ai {
+  background: rgba(124, 196, 255, 0.06);
+  border-color: rgba(124, 196, 255, 0.22);
+  cursor: default;
+}
+.instance--ai:hover {
+  border-color: rgba(124, 196, 255, 0.22);
+  transform: none;
+}
+
+/* AI-native pattern cards + the section divider */
+.pattern--ai {
+  border-color: rgba(124, 196, 255, 0.28);
+  background: linear-gradient(180deg, rgba(124, 196, 255, 0.05), var(--panel) 120px);
+}
+.pattern__count--ai {
+  color: #7cc4ff;
+  background: rgba(124, 196, 255, 0.14);
+  border-color: rgba(124, 196, 255, 0.32);
+}
+.patterns__divider {
+  max-width: 760px;
+  margin: 46px auto 24px;
+  text-align: center;
+}
+.patterns__divider h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+  color: #7cc4ff;
+}
+.patterns__divider p {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 0;
 }
 
 /* ───────────── category info panel ───────────── */
@@ -1071,8 +1234,8 @@ button.pmatrix__cell:hover .pmatrix__dot {
 .landing__how {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin: 48px 0 8px;
+  gap: 14px;
+  margin: 46px 0 8px;
 }
 .how-step {
   display: flex;
@@ -1297,17 +1460,23 @@ button.pmatrix__cell:hover .pmatrix__dot {
   /* let the page scroll instead of locking to 100vh panes */
   .app { height: auto; min-height: 100vh; }
 
-  /* top bar wraps onto multiple rows */
-  .topbar { flex-wrap: wrap; gap: 10px 12px; padding: 10px 14px; }
+  /* top bar: two tidy rows — brand + action icons, then dropdown + tabs */
+  .topbar { flex-wrap: wrap; gap: 9px 10px; padding: 10px 14px; }
+  .brand { order: 1; }
+  .brand__name { font-size: 21px; }
   .brand__tag { display: none; }
-  .domains { gap: 6px; }
-  .domain-select { flex-direction: row; align-items: center; gap: 6px; }
+  .actions { order: 2; margin-left: auto; gap: 6px; }
+  .action { padding: 7px 12px; font-size: 15px; line-height: 1; }
+  .action__text { display: none; } /* icons only on phones */
+  .domains { order: 3; flex-basis: 100%; gap: 7px; flex-wrap: wrap; }
+  .domain-select { flex: 1 1 100%; flex-direction: row; align-items: center; }
   .domain-select__caption { display: none; }
-  .actions { margin-left: 0; }
+  .domain-select__input { width: 100%; font-size: 15px; }
+  .domain-tab { flex: 1 1 auto; text-align: center; padding: 8px 15px; font-size: 14px; }
 
   /* domain view: stack the canvas over the details panel */
   .main { flex-direction: column; }
-  .canvas { flex: none; width: 100%; height: 56vh; }
+  .canvas { flex: none; width: 100%; height: 58vh; }
   .panel-toggle { display: none; }
   .inspector {
     width: 100%;
@@ -1317,18 +1486,39 @@ button.pmatrix__cell:hover .pmatrix__dot {
   .legend { font-size: 10px; padding: 6px 8px; gap: 6px 8px; }
 
   /* landing */
-  .landing__inner { padding: 40px 18px 44px; }
-  .landing__title { font-size: 26px; }
-  .landing__headline { font-size: 24px; }
-  .landing__sub { font-size: 14px; }
-  .landing__how { grid-template-columns: 1fr; margin: 32px 0 4px; }
+  .landing__inner { padding: 38px 18px 44px; }
+  .landing__title { font-size: 27px; }
+  .landing__headline { font-size: 28px; }
+  .landing__sub { font-size: 14.5px; }
+  .landing__pick { margin: 34px 0 14px; }
+  .landing__how { grid-template-columns: 1fr; margin: 30px 0 4px; }
   .landing__domains { grid-template-columns: 1fr; }
   .landing__btn { flex: 1 1 auto; }
+  .landing__btn--primary { flex-basis: 100%; }
+
+  /* brief / inspector: a touch more headroom on the headers */
+  .brief__title { font-size: 24px; }
+  .inspector__nodename { font-size: 22px; }
 
   /* patterns: single column, no forced-width overflow */
   .patterns { padding: 22px 16px 44px; }
   .patterns__grid { grid-template-columns: 1fr; }
-  .patterns__intro h1 { font-size: 20px; }
+  .patterns__intro h1 { font-size: 23px; }
+  /* 6-column matrix is tight on phones: narrower label col + smaller,
+     non-overflowing domain headers so "TICKETING" doesn't bleed into "SOCIAL" */
+  .pmatrix__row {
+    grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr)) minmax(0, 0.6fr);
+  }
+  .pmatrix__pcell { padding: 10px; font-size: 11.5px; }
+  .pmatrix__dhead {
+    padding: 8px 1px;
+    font-size: 8.5px;
+    letter-spacing: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pmatrix__cell { min-height: 40px; }
+  .patterns__divider h2 { font-size: 17px; }
 
   /* components 101: list becomes a horizontal chip strip above the detail */
   .components { flex-direction: column; position: relative; }

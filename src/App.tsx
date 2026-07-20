@@ -278,10 +278,10 @@ export function App() {
               onClick={() => setQuizMode((q) => !q)}
               title="Hide the answers and predict what breaks before revealing"
             >
-              {quizMode ? '◉ Quiz mode on' : '○ Quiz mode'}
+              {quizMode ? '◉' : '○'} <span className="action__text">Quiz{quizMode ? ' on' : ' mode'}</span>
             </button>
-            <button className="action" onClick={resetDomain} disabled={!isModified}>
-              ↺ Reset swaps
+            <button className="action" onClick={resetDomain} disabled={!isModified} title="Reset all swaps to the reference design">
+              ↺ <span className="action__text">Reset swaps</span>
             </button>
           </div>
         )}
@@ -293,10 +293,6 @@ export function App() {
         <PatternsView onJump={jumpToNode} />
       ) : (
         <>
-      <div className="domain-blurb">
-        <strong>{domain.tagline}</strong> <span>{domain.referenceNote}</span>
-      </div>
-
       <div className="main">
         <div className="canvas">
           <ReactFlow
